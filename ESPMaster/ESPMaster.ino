@@ -64,12 +64,14 @@ const char* PARAM_DEVICEMODE = "deviceMode";
 const char* PARAM_INPUT_TEXT = "inputText";
 const char* PARAM_SCHEDULE_ENABLED = "scheduleEnabled";
 const char* PARAM_SCHEDULE_DATE_TIME = "scheduledDateTimeUnix";
+const char* PARAM_COUNTDOWN_DATE = "countdownDateTimeUnix";
 const char* PARAM_ID = "id";
 
 //Device Modes
 const char* DEVICE_MODE_TEXT = "text";
 const char* DEVICE_MODE_CLOCK = "clock";
 const char* DEVICE_MODE_DATE = "date";
+const char* DEVICE_MODE_COUNTDOWN = "countdown";
 
 //Alignment options
 const char* ALIGNMENT_MODE_LEFT = "left";
@@ -82,6 +84,7 @@ String flapSpeed = "";
 String inputText = "";
 String previousDeviceMode = "";
 String currentDeviceMode = "";
+String countdownToDateInSeconds = "";
 long newMessageScheduledDateTimeUnix = 0;
 bool newMessageScheduleEnabled = false;
 
@@ -89,6 +92,7 @@ bool newMessageScheduleEnabled = false;
 const char* alignmentPath = "/alignment.txt";
 const char* flapSpeedPath = "/flapspeed.txt";
 const char* deviceModePath = "/devicemode.txt";
+const char* countdownPath = "/countdown.txt";
 
 //Create ezTime timezone object
 Timezone timezone; 
@@ -303,6 +307,9 @@ void setup() {
   });
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
+    String errorMessage = "";
+    String setDeviceMode = currentDeviceMode;
+
     SerialPrintln("Request Post of Form Received");    
     lastReceivedMessageDateTime = timezone.dateTime("d M y H:i:s");
     
@@ -330,14 +337,11 @@ void setup() {
         //HTTP POST device mode value
         if (p->name() == PARAM_DEVICEMODE) {
           String receivedValue = p->value();
-          if (receivedValue == DEVICE_MODE_TEXT || receivedValue == DEVICE_MODE_CLOCK || receivedValue == DEVICE_MODE_DATE) {
-            currentDeviceMode = receivedValue;
-            previousDeviceMode = currentDeviceMode;
+          if (receivedValue == DEVICE_MODE_TEXT || receivedValue == DEVICE_MODE_CLOCK || receivedValue == DEVICE_MODE_DATE || receivedValue == DEVICE_MODE_COUNTDOWN) {
+            setDeviceMode = receivedValue;
             
             SerialPrint("Device Mode set to: ");
-            SerialPrintln(currentDeviceMode);
-  
-            writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());            
+            SerialPrintln(setDeviceMode);
           }
           else {
             SerialPrint("Device Mode provided was not valid. Value: " + receivedValue); 
@@ -377,22 +381,48 @@ void setup() {
           SerialPrintln(newMessageScheduleEnabled);  
         }
 
-        //HTTP POST Schedule Millis
+        //HTTP POST Schedule Seconds
         if (p->name() == PARAM_SCHEDULE_DATE_TIME) {
-          String scheduleMillis = p->value().c_str();
-          newMessageScheduledDateTimeUnix = atol(scheduleMillis.c_str());
+          String scheduleSeconds = p->value().c_str();
+          newMessageScheduledDateTimeUnix = atol(scheduleSeconds.c_str());
+
+          //TODO: Check if this is before today? Error?
 
           SerialPrint("Schedule Date Time set to: ");
-          SerialPrintln(scheduleMillis);
+          SerialPrintln(scheduleSeconds);
+        }
+
+        //HTTP POST Countdown Seconds
+        if (p->name() == PARAM_COUNTDOWN_DATE) {
+          String countdownSeconds = p->value().c_str();
+          countdownToDateInSeconds = atol(countdownSeconds.c_str());
+
+          //TODO: Check if this is before today? Error?
+
+          SerialPrint("Countdown Date set to: ");
+          SerialPrintln(countdownSeconds);
         }
       }
     }
 
-    //Delay to give time to process the scheduled message
-    delay(1024);
+    //If there was an error, report it back
+    if (errorMessage !== "") {
+      //Redirect so that we don't have the "re-submit form" problem in browser for refresh
+      request->redirect("/?error-message=" + errorMessage);
+    }
+    else {
+      //Go ahead and change the mode now safe and no errors!
+      previousDeviceMode = currentDeviceMode;
+      currentDeviceMode = setDeviceMode;      
+  
+      writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
 
-    //Redirect so that we don't have the "re-submit form" problem in browser for refresh
-    request->redirect("/");
+      //Delay to give time to process the scheduled message so can be returned on "redirect"
+      delay(1024);
+
+      //Redirect so that we don't have the "re-submit form" problem in browser for refresh
+      request->redirect("/");
+    }
   });
   
   server.begin();
@@ -458,9 +488,10 @@ void loop() {
     previousMillis = currentMillis;
 
     checkScheduledMessages();
+    checkCountdown();
 
     //Mode Selection
-    if (currentDeviceMode == DEVICE_MODE_TEXT) { 
+    if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
       showText(inputText);
     } 
     else if (currentDeviceMode == DEVICE_MODE_DATE) {
@@ -468,7 +499,41 @@ void loop() {
     } 
     else if (currentDeviceMode == DEVICE_MODE_CLOCK) {
       showClock();
+    } 
+  }
+}
+
+void checkCountdown() {
+  //This will check if a day has passed since the last time the countdown was updated
+  if (currentDeviceMode == DEVICE_MODE_COUNTDOWN) {
+    long countdownInSeconds = atol(countdownToDateInSeconds);
+
+    long currentTimeSeconds = timezone.now();
+    long differenceSeconds = countdownInSeconds - currentTimeSeconds;
+    
+    long hours = differenceSeconds / 60 / 60;
+    long days = hours / 24;
+
+    String daysText;
+    switch (days)
+    {
+      case 0:
+        daysText = "0 days";
+        break;
+      case 1:
+        daysText = days + " day";
+        break;
+      default:
+        daysText = days + " days";
+        break;
     }
+
+    if (daysText.length() > UNITSAMOUNT)
+    {
+      daysText = "" + days;
+    }
+
+    inputText = daysText;
   }
 }
 

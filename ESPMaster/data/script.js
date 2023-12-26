@@ -15,6 +15,8 @@ form.onsubmit = function () {
 
 	containerSubmit.replaceWith(loadingIconContainer);
 
+	const deviceMode = document.querySelector('input[name="deviceMode"]:checked').value;
+
 	if (localDevelopment) {
 		setTimeout(function() {
 			location.reload();
@@ -23,42 +25,70 @@ form.onsubmit = function () {
 		return false;
 	}
 	else {
-		var r = document.getElementById('inputText').value;
-		r = r.replace(/ä/gi, '$');
-		r = r.replace(/ö/gi, '&');
-		r = r.replace(/ü/gi, '#');
-		document.getElementById('inputText').value = r;
+		switch(deviceMode) {
+			case "text":
+				//Convert characters which don't translate directly	
+				var r = document.getElementById('inputText').value;
+				r = r.replace(/ä/gi, '$');
+				r = r.replace(/ö/gi, '&');
+				r = r.replace(/ü/gi, '#');
+				document.getElementById('inputText').value = r;
 
-		//Set the hidden date time to UNIX
-		var currentScheduledDateTimeText = document.getElementById('inputScheduledDateTime').value;
+				//Set the hidden date time to UNIX
+				var currentScheduledDateTimeText = document.getElementById('inputScheduledDateTime').value;
 
-		//Take into account the timezone offset when we generate the unix timestamp
-		var currentScheduledDateTime = new Date(currentScheduledDateTimeText);
-		var tzOffset = (new Date().getTimezoneOffset() * 60000);
-		var time = Math.floor((currentScheduledDateTime.getTime() - tzOffset) / 1000);
-		document.getElementById('inputHiddenScheduledDateTimeUnix').value = time;
+				//Take into account the timezone offset when we generate the unix timestamp
+				var currentScheduledDateTime = new Date(currentScheduledDateTimeText);
+				var tzOffset = (new Date().getTimezoneOffset() * 60000);
+				var time = Math.floor((currentScheduledDateTime.getTime() - tzOffset) / 1000);
+				document.getElementById('inputHiddenScheduledDateTimeUnix').value = time;
+
+				break;
+			case "countdown":
+				//Set the hidden date time to UNIX
+				var currentCountdownDateTimeText = document.getElementById('inputCountdownDateTime').value;
+
+				//Take into account the timezone offset when we generate the unix timestamp
+				var currentCountdownDateTime = new Date(currentCountdownDateTimeText);
+				var tzOffset = (new Date().getTimezoneOffset() * 60000);
+				var time = Math.floor((currentCountdownDateTime.getTime() - tzOffset) / 1000);
+				document.getElementById('inputHiddenCountdownDateTimeUnix').value = time;
+
+				break;
+		}
 	}
 }
 
 // Retrieve current Split-Flap settings when the page loads/refreshes
 window.addEventListener('load', loadPage);
 
+function showBannerMessage(message, hideAfterDuration) {
+	var bannerMessageElement = document.getElementById('bannerMessage'); 
+	bannerMessageElement.innerHTML = message;
+
+	bannerMessageElement.classList.remove("hidden");
+
+	if (hideAfterDuration) {
+		setTimeout(function() {
+			bannerMessageElement.classList.add("hidden");
+		}, 7500);
+	}
+}
+
 // Request and retrieve settings from ESP-01s filesystem
 function loadPage() {
+	//Show messages from the server if need be
 	const urlParams = new URLSearchParams(location.search);
-	const isResetting = urlParams.get('is-resetting-units');
-	if (isResetting !== undefined && isResetting == "true") {
-		var bannerMessageElement = document.getElementById('bannerMessage'); 
-		bannerMessageElement.innerHTML = `
+	const errorMessage = urlParams.get('error-message');
+	if (errorMessage !== null) {
+		showBannerMessage(errorMessage);
+	}
+	else if (urlParams.get('is-resetting-units') === "true") {
+		showBannerMessage(`
 			Display is now resetting/re-calibrating. It should only take a few seconds.
 			<br>
 			It will display different characters in order to carry this out and then go back to the last thing being displayed.
-		`;
-
-		bannerMessageElement.style = "display: block;";
-		setTimeout(function() {
-			bannerMessageElement.style = "display: none;";
-		}, 5000);
+		`);
 	}
 
 	if (localDevelopment) {
@@ -67,6 +97,7 @@ function loadPage() {
 		setAlignment("left");
 		setVersion("Development")
 		setUnitCount("10");
+		setLastReceviedMessage("Some Time", "Hello World");
 		showScheduledMessages([
 			{
 				"scheduledDateTimeMillis": 1690134480,
@@ -116,7 +147,8 @@ function loadPage() {
 					showScheduledMessages(responseObject.scheduledMessages);
 				}
 
-				setLastReceviedMessage(responseObject.lastTimeReceivedMessage);
+				setLastReceviedMessage(responseObject.lastTimeReceivedMessage, 
+					responseObject.lastInputMessage);
 			}
 		};
 
@@ -161,7 +193,7 @@ function updateSpeedSlider() {
 	document.getElementById("rangeFlapSpeedValue").innerHTML = sliderValue + " %";
 }
 
-//sets mode by checking corresponding radio button
+//sets mode by checking corresponding radio button/tab
 function setSavedMode(mode) {
 	switch (mode) {
 		case "text":
@@ -173,6 +205,23 @@ function setSavedMode(mode) {
 		case "clock":
 			document.getElementById("modeClock").checked = true;
 			break;
+	}
+
+	setDeviceModeTab(mode);
+}
+
+//shows/hides the tab associated with the device mode
+function setDeviceModeTab(mode) {
+	document.querySelectorAll('.tab').forEach(function(tab) {
+		if (!tab.classList.contains("hidden")) {
+			tab.classList.add("hidden");
+		}
+	});
+
+	var tabName = `tab-${mode}`;
+	var tab = document.getElementById(tabName);
+	if (tab !== null) {
+		tab.classList.remove("hidden");
 	}
 }
 
@@ -208,8 +257,10 @@ function setUnitCount(unitCount) {
 }
 
 //sets the last received post message to the server
-function setLastReceviedMessage(time) {
-	document.getElementById("labelLastMessageReceived").innerHTML = time == "" ? "N/A" : time;
+function setLastReceviedMessage(time, lastMessage) {
+	const timeMessage = time == "" ? "N/A" : time;
+	const textMessage = lastMessage == "" ? "N/A" : lastMessage;
+	document.getElementById("labelLastMessageReceived").innerHTML = `${textMessage} @ ${timeMessage}`;
 }
 
 function showHideScheduledMessageInput() {
@@ -217,10 +268,10 @@ function showHideScheduledMessageInput() {
 	var checkboxScheduled = document.getElementById("inputCheckboxScheduleEnabled");
 
 	if (checkboxScheduled.checked) {
-		dateTimeElement.style.display = "inline-block";
+		dateTimeElement.classList.remove("hidden")
 	}
 	else {
-		dateTimeElement.style.display = "none";
+		dateTimeElement.classList.add("hidden")
 	}
 }
 

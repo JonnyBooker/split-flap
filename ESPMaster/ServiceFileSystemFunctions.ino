@@ -14,23 +14,26 @@ void loadValuesFromFileSystem() {
   flapSpeed = readFile(LittleFS, flapSpeedPath, "80");
   currentDeviceMode = readFile(LittleFS, deviceModePath, DEVICE_MODE_TEXT);
   previousDeviceMode = currentDeviceMode;
+  countdownToDateInSeconds = readFile(LittleFS, countdownPath, "0");
 
   SerialPrintln("Alignment: " + alignment);
   SerialPrintln("Flap Speed: " + flapSpeed);
   SerialPrintln("Device Mode: " + currentDeviceMode);
+  SerialPrintln("Countdown to Date in Seconds: " + countdownToDateInSeconds);
 }
 
 //Gets all the currently stored calues from memory in a JSON object
 String getCurrentSettingValues() {
   JSONVar values;
 
+  values["unitCount"] = UNITSAMOUNT;
   values["alignment"] = alignment;
   values["flapSpeed"] = flapSpeed;
   values["deviceMode"] = currentDeviceMode;
   values["version"] = espVersion;
-  values["unitCount"] = UNITSAMOUNT;
   values["lastTimeReceivedMessage"] = lastReceivedMessageDateTime;
   values["lastInputMessage"] = inputText;
+  values["countdownToDateInSeconds"] = atol(countdownToDateInSeconds);
 
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
     ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];

@@ -16,11 +16,11 @@
 			<br>
 			Flaps: <label id="labelUnits">N/A</label>
 			<br>
-			Last Received Time: <label id="labelLastMessageReceived">N/A</label>
+			Last Received: <label id="labelLastMessageReceived">N/A</label>
 		</h4>
 	</div>
 	<div class="content">
-		<div id="bannerMessage" class="banner-message" style="display: none;"></div>
+		<div id="bannerMessage" class="banner-message hidden"></div>
 
 		<form action="/" method="post" id="form">
 			<div class="card-grid">
@@ -57,46 +57,57 @@
 				<div class="card">
 					<p class="card-title">Modes</p>
 					<p>
-						<input type="radio" id="modeClock" name="deviceMode" value="clock" />
+						<input onchange="setDeviceModeTab(this.value)" type="radio" id="modeClock" name="deviceMode" value="clock" />
 						<label for="modeClock">Clock Mode</label>
 					</p>
 
 					<p>
-						<input type="radio" id="modeDate" name="deviceMode" value="date" />
+						<input onchange="setDeviceModeTab(this.value)" type="radio" id="modeDate" name="deviceMode" value="date" />
 						<label for="modeDate">Date Mode</label>
 					</p>
 
 					<p>
-						<input type="radio" id="modeText" name="deviceMode" value="text" />
+						<input onchange="setDeviceModeTab(this.value)" type="radio" id="modeCountdown" name="deviceMode" value="countdown" />
+						<label for="modeCountdown">Countdown Mode</label>
+					</p>
+
+					<p>
+						<input onchange="setDeviceModeTab(this.value)" type="radio" id="modeText" name="deviceMode" value="text" />
 						<label for="modeText">Text Mode</label>
 					</p>
+					
+					<div id="tab-text" class="tab">
+						<p>
+							<label for="inputText">Text</label>
+							<input type="text" id="inputText" name="inputText" onkeyup="updateCharacterCount()" autocomplete="off" maxlength="75" />
+							<span class="character-count">
+								<label id="labelCharacterCount">0</label> Character(s)
+							</span>						
+							<span>
+								<input type="button" value="+ Newline" onclick="addNewline()"/>
+							</span>
+						</p>
 
-					<p>
-						<label for="inputText">Text</label>
-						<input type="text" id="inputText" name="inputText" onkeyup="updateCharacterCount()" autocomplete="off" maxlength="75" />
-						<span class="character-count">
-							<label id="labelCharacterCount">0</label> Character(s)
-						</span>						
-						<span>
-							<input type="button" value="+ Newline" onclick="addNewline()"/>
-						</span>
-					</p>
+						<p>
+							<label for="scheduledDateTime">Schedule Message?</label>
+							<input type="checkbox" id="inputCheckboxScheduleEnabled" name="scheduleEnabled"	onchange="showHideScheduledMessageInput()" />
+							<br>
+							<input type="datetime-local" class="hidden" id="inputScheduledDateTime"	name="scheduleDateTime">
+							<input type="hidden" id="inputHiddenScheduledDateTimeUnix" name="scheduledDateTimeUnix" />
+						</p>				
+					</div>
 
-					<p>
-						<label for="scheduledDateTime">Schedule Message?</label>
-						<input type="checkbox" id="inputCheckboxScheduleEnabled" name="scheduleEnabled"
-							onchange="showHideScheduledMessageInput()" />
-						<br>
-						<input type="datetime-local" style="display: none;" id="inputScheduledDateTime"
-							name="scheduleDateTime">
-						<input type="hidden" id="inputHiddenScheduledDateTimeUnix" name="scheduledDateTimeUnix" />
-					</p>
-
+					
+					<div id="tab-countdown" class="tab hidden">
+						<input type="date" id="inputCountdownDateTime" name="countdownDateTime">
+						<input type="hidden" id="inputHiddenCountdownDateTimeUnix" name="countdownDateTimeUnix" />
+					</div>
+	
 					<p>
 						<div id="containerSubmit">
 							<input type="submit" value="Submit" />
 						</div>
-					</p>
+					</p>		
 				</div>
 			</div>
 		</form>
