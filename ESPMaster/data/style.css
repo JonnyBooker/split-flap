@@ -46,8 +46,6 @@ a {
 	background-color: #F8880E;
 }
 
-
-
 input[type=submit]:hover,
 a:hover {
 	background-color: #FFB96D;
@@ -77,6 +75,10 @@ input[type=checkbox] {
 
 input[type=datetime-local] {
 	width: 150px;
+}
+
+.hidden {
+	display: none;
 }
 
 .topnav {
