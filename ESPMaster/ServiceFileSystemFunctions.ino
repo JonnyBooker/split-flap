@@ -10,16 +10,17 @@ void initialiseFileSystem() {
 //Load variables that are saved to the file system
 void loadValuesFromFileSystem() {
   //Load values saved in LittleFS
+  countdownToDateUnix = readFile(LittleFS, countdownPath, "0");
   alignment = readFile(LittleFS, alignmentPath, ALIGNMENT_MODE_LEFT);
   flapSpeed = readFile(LittleFS, flapSpeedPath, "80");
   currentDeviceMode = readFile(LittleFS, deviceModePath, DEVICE_MODE_TEXT);
   previousDeviceMode = currentDeviceMode;
-  countdownToDateInSeconds = readFile(LittleFS, countdownPath, "0");
 
-  SerialPrintln("Alignment: " + alignment);
-  SerialPrintln("Flap Speed: " + flapSpeed);
-  SerialPrintln("Device Mode: " + currentDeviceMode);
-  SerialPrintln("Countdown to Date in Seconds: " + countdownToDateInSeconds);
+  SerialPrintln("Loaded Settings:");
+  SerialPrintln("   Alignment: " + alignment);
+  SerialPrintln("   Flap Speed: " + flapSpeed);
+  SerialPrintln("   Device Mode: " + currentDeviceMode);
+  SerialPrintln("   Countdown to Date in Seconds: " + countdownToDateUnix);
 }
 
 //Gets all the currently stored calues from memory in a JSON object
@@ -33,12 +34,12 @@ String getCurrentSettingValues() {
   values["version"] = espVersion;
   values["lastTimeReceivedMessage"] = lastReceivedMessageDateTime;
   values["lastInputMessage"] = inputText;
-  values["countdownToDateInSeconds"] = atol(countdownToDateInSeconds);
+  values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
 
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
     ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
     
-    values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeMillis"] = scheduledMessage.ScheduledDateTimeMillis;
+    values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
     values["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
   }
   
@@ -86,6 +87,6 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
     SerialPrintln("- file written");
   } 
   else {
-    SerialPrintln("- frite failed");
+    SerialPrintln("- write failed");
   }
 }

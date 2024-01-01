@@ -84,7 +84,7 @@ String flapSpeed = "";
 String inputText = "";
 String previousDeviceMode = "";
 String currentDeviceMode = "";
-String countdownToDateInSeconds = "";
+String countdownToDateUnix = "";
 long newMessageScheduledDateTimeUnix = 0;
 bool newMessageScheduleEnabled = false;
 
@@ -285,7 +285,7 @@ void setup() {
       for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
         ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
     
-        if (idValue.toInt() == scheduledMessage.ScheduledDateTimeMillis) {
+        if (idValue.toInt() == scheduledMessage.ScheduledDateTimeUnix) {
           SerialPrintln("Deleting Scheduled Message due to be shown: " + scheduledMessage.Message);
           scheduledMessages.remove(scheduledMessageIndex);
           
@@ -308,7 +308,6 @@ void setup() {
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
     String errorMessage = "";
-    String setDeviceMode = currentDeviceMode;
 
     SerialPrintln("Request Post of Form Received");    
     lastReceivedMessageDateTime = timezone.dateTime("d M y H:i:s");
@@ -323,11 +322,11 @@ void setup() {
           String receivedValue = p->value();
           if (receivedValue == ALIGNMENT_MODE_LEFT || receivedValue == ALIGNMENT_MODE_CENTER || receivedValue == ALIGNMENT_MODE_RIGHT) {
             alignment = receivedValue;
+  
+            writeFile(LittleFS, alignmentPath, alignment.c_str());
             
             SerialPrint("Alignment set to: ");
             SerialPrintln(alignment);
-  
-            writeFile(LittleFS, alignmentPath, alignment.c_str());
           }
           else {
             SerialPrint("Alignment provided was not valid. Value: " + receivedValue); 
@@ -338,23 +337,27 @@ void setup() {
         if (p->name() == PARAM_DEVICEMODE) {
           String receivedValue = p->value();
           if (receivedValue == DEVICE_MODE_TEXT || receivedValue == DEVICE_MODE_CLOCK || receivedValue == DEVICE_MODE_DATE || receivedValue == DEVICE_MODE_COUNTDOWN) {
-            setDeviceMode = receivedValue;
+            previousDeviceMode = currentDeviceMode;
+            currentDeviceMode = receivedValue;      
+        
+            writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
             
             SerialPrint("Device Mode set to: ");
-            SerialPrintln(setDeviceMode);
+            SerialPrintln(receivedValue);
           }
           else {
-            SerialPrint("Device Mode provided was not valid. Value: " + receivedValue); 
+            SerialPrint("Device Mode provided was not valid. Invalid Value: " + receivedValue); 
           }
         }
 
         //HTTP POST Flap Speed Slider value
         if (p->name() == PARAM_FLAP_SPEED) {
           flapSpeed = p->value().c_str();
-          SerialPrint("Flap Speed set to: ");
-          SerialPrintln(flapSpeed);
 
           writeFile(LittleFS, flapSpeedPath, flapSpeed.c_str());
+
+          SerialPrint("Flap Speed set to: ");
+          SerialPrintln(flapSpeed);
         }
 
         //HTTP POST inputText value
@@ -366,7 +369,7 @@ void setup() {
             SerialPrintln(inputText); 
           }
           else {
-            SerialPrint("Input Text set to: <Blank>");
+            SerialPrintln("Input Text set to: <Blank>");
           }
         }
 
@@ -383,42 +386,32 @@ void setup() {
 
         //HTTP POST Schedule Seconds
         if (p->name() == PARAM_SCHEDULE_DATE_TIME) {
-          String scheduleSeconds = p->value().c_str();
-          newMessageScheduledDateTimeUnix = atol(scheduleSeconds.c_str());
-
-          //TODO: Check if this is before today? Error?
+          newMessageScheduledDateTimeUnix = atol(p->value().c_str());
 
           SerialPrint("Schedule Date Time set to: ");
-          SerialPrintln(scheduleSeconds);
+          SerialPrintln(newMessageScheduledDateTimeUnix);
         }
 
         //HTTP POST Countdown Seconds
         if (p->name() == PARAM_COUNTDOWN_DATE) {
-          String countdownSeconds = p->value().c_str();
-          countdownToDateInSeconds = atol(countdownSeconds.c_str());
+          String countdownUnix = p->value().c_str();
+          countdownToDateUnix = atol(countdownUnix.c_str());
 
-          //TODO: Check if this is before today? Error?
+          writeFile(LittleFS, countdownPath, countdownUnix.c_str());
 
           SerialPrint("Countdown Date set to: ");
-          SerialPrintln(countdownSeconds);
+          SerialPrintln(countdownToDateUnix);
         }
       }
     }
 
-    //If there was an error, report it back
-    if (errorMessage !== "") {
-      //Redirect so that we don't have the "re-submit form" problem in browser for refresh
-      request->redirect("/?error-message=" + errorMessage);
+    //If there was an error, report back to check what has been input
+    if (errorMessage != "") {
+      request->redirect("/?invalid-submission=" + true);
     }
     else {
-      //Go ahead and change the mode now safe and no errors!
-      previousDeviceMode = currentDeviceMode;
-      currentDeviceMode = setDeviceMode;      
-  
-      writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
-
       //Delay to give time to process the scheduled message so can be returned on "redirect"
-      delay(1024);
+      //delay(1024);
 
       //Redirect so that we don't have the "re-submit form" problem in browser for refresh
       request->redirect("/");
@@ -433,7 +426,7 @@ void setup() {
 
 void loop() {
   //Reboot in here as if we restart within a request handler, no response is returned
-  if (isPendingReboot == 1) {
+  if (isPendingReboot) {
     SerialPrintln("Rebooting Now...");
     delay(200);
     ESP.restart();
@@ -487,8 +480,10 @@ void loop() {
   if (currentMillis - previousMillis >= 1024) {
     previousMillis = currentMillis;
 
-    checkScheduledMessages();
-    checkCountdown();
+    //checkScheduledMessages();
+    //checkCountdown();
+
+    SerialPrintln("# Mode: " + currentDeviceMode + " - Input Text: " + inputText);
 
     //Mode Selection
     if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
@@ -504,9 +499,12 @@ void loop() {
 }
 
 void checkCountdown() {
+  SerialPrintln("------------ Checking Countdown...");
+
   //This will check if a day has passed since the last time the countdown was updated
   if (currentDeviceMode == DEVICE_MODE_COUNTDOWN) {
-    long countdownInSeconds = atol(countdownToDateInSeconds);
+    SerialPrintln("------------ Processing Countdown...");
+    long countdownInSeconds = atol(countdownToDateUnix.c_str());
 
     long currentTimeSeconds = timezone.now();
     long differenceSeconds = countdownInSeconds - currentTimeSeconds;
@@ -514,26 +512,17 @@ void checkCountdown() {
     long hours = differenceSeconds / 60 / 60;
     long days = hours / 24;
 
-    String daysText;
-    switch (days)
-    {
-      case 0:
-        daysText = "0 days";
-        break;
-      case 1:
-        daysText = days + " day";
-        break;
-      default:
-        daysText = days + " days";
-        break;
-    }
+    String daysText = days + days == 1 ? " day" : " days";
 
-    if (daysText.length() > UNITSAMOUNT)
-    {
+    if (daysText.length() > UNITSAMOUNT) {
+      SerialPrintln("Days Text was too long, cutting down to just the number...");
       daysText = "" + days;
     }
 
-    inputText = daysText;
+    if (inputText != daysText) {
+      SerialPrintln("Setting Countdown Text to: " + daysText);
+      inputText = daysText;
+    }
   }
 }
 
@@ -547,7 +536,7 @@ void checkScheduledMessages() {
     for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
       ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
 
-      if (newMessageScheduledDateTimeUnix == scheduledMessage.ScheduledDateTimeMillis) {
+      if (newMessageScheduledDateTimeUnix == scheduledMessage.ScheduledDateTimeUnix) {
         SerialPrintln("Removing Existing Scheduled Message due to be shown, it will be replaced");
         scheduledMessages.remove(scheduledMessageIndex);
         break;
@@ -572,11 +561,11 @@ void checkScheduledMessages() {
 
   //Iterate over the current bunch of scheduled messages. If we find one where the current time exceeds when we should show
   //the message, then we need to show that message immediately
-  unsigned long currentTimeMillis = timezone.now();
+  unsigned long currentTimeUnix = timezone.now();
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
     ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
 
-    if (currentTimeMillis > scheduledMessage.ScheduledDateTimeMillis) {
+    if (currentTimeUnix > scheduledMessage.ScheduledDateTimeUnix) {
       SerialPrintln("Scheduled Message due to be shown: " + scheduledMessage.Message);
 
       //Set the next message to 

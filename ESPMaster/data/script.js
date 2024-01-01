@@ -100,7 +100,7 @@ function loadPage() {
 		setLastReceviedMessage("Some Time", "Hello World");
 		showScheduledMessages([
 			{
-				"scheduledDateTimeMillis": 1690134480,
+				"scheduledDateTimeUnix": 1690134480,
 				"message": "Test Message 1"
 			},
 		]);
@@ -205,6 +205,9 @@ function setSavedMode(mode) {
 		case "clock":
 			document.getElementById("modeClock").checked = true;
 			break;
+		case "countdown":
+			document.getElementById("modeCountdown").checked = true;
+			break;
 	}
 
 	setDeviceModeTab(mode);
@@ -280,7 +283,7 @@ function showScheduledMessages(scheduledMessages) {
 	elementMessageCount.innerText = scheduledMessages.length;
 
 	//Closest to being shown first
-	scheduledMessages = scheduledMessages.sort((a, b) => a.scheduledDateTimeMillis - b.scheduledDateTimeMillis);
+	scheduledMessages = scheduledMessages.sort((a, b) => a.scheduledDateTimeUnix - b.scheduledDateTimeUnix);
 
 	for (var scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.length; scheduledMessageIndex++) {
 		var scheduledMessage = scheduledMessages[scheduledMessageIndex];
@@ -292,7 +295,7 @@ function showScheduledMessages(scheduledMessages) {
 		//Create a element to show the time
 		var timeElement = document.createElement("div");
 		timeElement.className = "time";
-		timeElement.innerText = new Date((scheduledMessage.scheduledDateTimeMillis * 1000) + (new Date().getTimezoneOffset() * 60000)).toString().slice(0, -34);
+		timeElement.innerText = new Date((scheduledMessage.scheduledDateTimeUnix * 1000) + (new Date().getTimezoneOffset() * 60000)).toString().slice(0, -34);
 
 		//Create a element to show the text
 		var textElement = document.createElement("div");
@@ -305,7 +308,7 @@ function showScheduledMessages(scheduledMessages) {
 		actionElement.className = "action";
 		actionButtonElement.className = "remove-button";
 		actionButtonElement.innerText = "Remove";
-		actionButtonElement.setAttribute('onclick', `deleteScheduledMessage(${scheduledMessage.scheduledDateTimeMillis}, '${scheduledMessage.message}')`);
+		actionButtonElement.setAttribute('onclick', `deleteScheduledMessage(${scheduledMessage.scheduledDateTimeUnix}, '${scheduledMessage.message}')`);
 		actionElement.appendChild(actionButtonElement);
 
 		//Add all the elements to the message
