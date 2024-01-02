@@ -37,7 +37,7 @@ void showText(String message) {
 
     //If the device wasn't previously in text mode, delay for a short time so can read!
     if (currentDeviceMode != previousDeviceMode) {
-      delay(3000);
+      delay(5000);
       currentDeviceMode = previousDeviceMode;
     }
 

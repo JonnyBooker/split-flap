@@ -8,6 +8,7 @@ var timezoneOffset = 0;
 //Used for submission!
 const form = document.getElementById('form');
 form.onsubmit = function () {
+	//Show loading icon
 	var containerSubmit = document.getElementById('containerSubmit');
 	
 	const loadingIconContainer = document.createElement("div");
@@ -270,17 +271,17 @@ function setCountdownDate(dateUnix) {
 	//If one has been set and it is not exceeded
 	if (dateUnix !== 0) {
 		var countdownDate = new Date(dateUnix * 1000);
-		if (countdownDate > currentDate) {
+		if (countdownDate >= currentDate) {
 			currentCountdownDate.value = countdownDate.toISOString().slice(0, 10);
-			return;
+
+			if (countdownDate - currentDate < 24000) {
+				currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
+				return;
+			}
 		}
 	}
 
-	//Set date fields to be a minimum of tomorrows date
-	var currentDate = (new Date(Date.now() - tzOffset));
-	var nextDayDate = new Date();
-	nextDayDate.setDate(currentDate.getDate() + 1);
-	
+	//Set date fields to be a minimum of tomorrows date	
 	currentCountdownDate.value = currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
 }
 
