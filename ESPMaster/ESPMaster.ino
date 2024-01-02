@@ -3,6 +3,16 @@
 Split Flap ESP Master
 *********************
 */
+#define BAUDRATE 115200     //Serial debugging BAUD rate
+#define ANSWERSIZE 1        //Size of unit's request answer
+#define UNITSAMOUNT 10      //Amount of connected units !IMPORTANT!
+#define FLAPAMOUNT 45       //Amount of Flaps in each unit
+#define MINSPEED 1          //Min Speed
+#define MAXSPEED 12         //Max Speed
+#define OTA_ENABLE          //Comment out to disable OTA functionality
+//#define SERIAL_ENABLE       //Uncomment for serial debug messages, no serial messages if this whole line is a comment!
+//#define UNIT_CALLS_DISABLE  //Disable the call to the units so can just debug the ESP
+
 #include <Arduino.h>
 #include <Arduino_JSON.h>
 #include <ESP8266WiFi.h>
@@ -17,18 +27,16 @@ Split Flap ESP Master
 #include "Classes.h"
 #include "LittleFS.h"
 
-#define BAUDRATE 115200     //Serial debugging BAUD rate
-#define ANSWERSIZE 1        //Size of unit's request answer
-#define UNITSAMOUNT 10      //Amount of connected units !IMPORTANT!
-#define FLAPAMOUNT 45       //Amount of Flaps in each unit
-#define MINSPEED 1          //Min Speed
-#define MAXSPEED 12         //Max Speed
-#define OTA_ENABLE          //Comment out to disable OTA functionality
-//#define SERIAL_ENABLE       //Uncomment for serial debug messages, no serial messages if this whole line is a comment!
-//#define UNIT_CALLS_DISABLE  //Disable the call to the units so can just debug the ESP
+//OTA Libary
+#ifdef OTA_ENABLE
+#include <ArduinoOTA.h>
+
+//Used to denote that the system has gone into OTA mode
+bool isInOtaMode = 0;
+#endif
 
 //The current version of code to display on the UI
-const char* espVersion = "1.3.0";
+const char* espVersion = "1.4.0";
 
 //REPLACE WITH YOUR NETWORK CREDENTIALS
 const char* ssid = "SSID";
@@ -97,19 +105,16 @@ const char* countdownPath = "/countdown.txt";
 //Create ezTime timezone object
 Timezone timezone; 
 
-//OTA Functionality
-#ifdef OTA_ENABLE
-#include <ArduinoOTA.h>
-
-//Used to denote that the system has gone into OTA mode
-bool isInOtaMode = 0;
-#endif
-
 //Denotes the system is pending a restart
 bool isPendingReboot = 0;
 
 //Denotes the system needs calibrating
 bool isPendingUnitsReset = 0;
+
+//Used to denote that the system has gone into OTA mode
+#ifdef OTA_ENABLE
+bool isInOtaMode = 0;
+#endif
 
 //Used for display on the UI
 String lastReceivedMessageDateTime;
@@ -133,9 +138,9 @@ void setup() {
 #endif
   //Wire.begin(D1, D2); //For NodeMCU testing only SDA=D1 and SCL=D2
 
-  initWiFi(); //initializes WiFi
-  initialiseFileSystem(); //initializes filesystem
-  loadValuesFromFileSystem(); //loads initial values from filesystem
+  initWiFi();
+  initialiseFileSystem();
+  loadValuesFromFileSystem();
 
   //ezTime initialization
   waitForSync();
@@ -301,13 +306,13 @@ void setup() {
       }
     } 
     else {
-        SerialPrint("Delete Scheduled Message Received with no ID");
+        SerialPrintln("Delete Scheduled Message Received with no ID");
         request->send(400, "text/plain", "No ID specified");
     }
   });
 
   server.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
-    String errorMessage = "";
+    bool submissionError = false;
 
     SerialPrintln("Request Post of Form Received");    
     lastReceivedMessageDateTime = timezone.dateTime("d M y H:i:s");
@@ -325,11 +330,11 @@ void setup() {
   
             writeFile(LittleFS, alignmentPath, alignment.c_str());
             
-            SerialPrint("Alignment set to: ");
-            SerialPrintln(alignment);
+            SerialPrint("Alignment set to: " + alignment);
           }
           else {
-            SerialPrint("Alignment provided was not valid. Value: " + receivedValue); 
+            SerialPrintln("Alignment provided was not valid. Value: " + receivedValue); 
+            submissionError = true;
           }
         }
 
@@ -337,16 +342,16 @@ void setup() {
         if (p->name() == PARAM_DEVICEMODE) {
           String receivedValue = p->value();
           if (receivedValue == DEVICE_MODE_TEXT || receivedValue == DEVICE_MODE_CLOCK || receivedValue == DEVICE_MODE_DATE || receivedValue == DEVICE_MODE_COUNTDOWN) {
-            previousDeviceMode = currentDeviceMode;
-            currentDeviceMode = receivedValue;      
+            //This is a defacto mode from the user being set so they should be the same
+            currentDeviceMode = previousDeviceMode = receivedValue;
         
             writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
             
-            SerialPrint("Device Mode set to: ");
-            SerialPrintln(receivedValue);
+            SerialPrintln("Device Mode set to: " + receivedValue);
           }
           else {
-            SerialPrint("Device Mode provided was not valid. Invalid Value: " + receivedValue); 
+            SerialPrintln("Device Mode provided was not valid. Invalid Value: " + receivedValue); 
+            submissionError = true;
           }
         }
 
@@ -356,8 +361,7 @@ void setup() {
 
           writeFile(LittleFS, flapSpeedPath, flapSpeed.c_str());
 
-          SerialPrint("Flap Speed set to: ");
-          SerialPrintln(flapSpeed);
+          SerialPrintln("Flap Speed set to: " + flapSpeed);
         }
 
         //HTTP POST inputText value
@@ -365,8 +369,7 @@ void setup() {
           inputText = p->value().c_str();
           
           if (inputText != "") {
-            SerialPrint("Input Text set to: ");
-            SerialPrintln(inputText); 
+            SerialPrintln("Input Text set to: " + inputText);
           }
           else {
             SerialPrintln("Input Text set to: <Blank>");
@@ -380,16 +383,14 @@ void setup() {
             true : 
             false;
             
-          SerialPrint("Schedule Enable set to: ");
-          SerialPrintln(newMessageScheduleEnabled);  
+          SerialPrintln("Schedule Enable set to: " + newMessageScheduleEnabled);
         }
 
         //HTTP POST Schedule Seconds
         if (p->name() == PARAM_SCHEDULE_DATE_TIME) {
           newMessageScheduledDateTimeUnix = atol(p->value().c_str());
 
-          SerialPrint("Schedule Date Time set to: ");
-          SerialPrintln(newMessageScheduledDateTimeUnix);
+          SerialPrintln("Schedule Date Time set to: " + newMessageScheduledDateTimeUnix);
         }
 
         //HTTP POST Countdown Seconds
@@ -399,25 +400,25 @@ void setup() {
 
           writeFile(LittleFS, countdownPath, countdownUnix.c_str());
 
-          SerialPrint("Countdown Date set to: ");
-          SerialPrintln(countdownToDateUnix);
+          SerialPrintln("Countdown Date set to: " + countdownToDateUnix);
         }
       }
     }
 
     //If there was an error, report back to check what has been input
-    if (errorMessage != "") {
+    if (submissionError) {
       request->redirect("/?invalid-submission=" + true);
     }
     else {
       //Delay to give time to process the scheduled message so can be returned on "redirect"
-      //delay(1024);
+      delay(1024);
 
       //Redirect so that we don't have the "re-submit form" problem in browser for refresh
       request->redirect("/");
     }
   });
   
+  SerialPrintln("Starting server...");
   server.begin();
   
   SerialPrintln("Master module ready!");
@@ -480,10 +481,8 @@ void loop() {
   if (currentMillis - previousMillis >= 1024) {
     previousMillis = currentMillis;
 
-    //checkScheduledMessages();
-    //checkCountdown();
-
-    SerialPrintln("# Mode: " + currentDeviceMode + " - Input Text: " + inputText);
+    checkScheduledMessages();
+    checkCountdown();
 
     //Mode Selection
     if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
@@ -499,21 +498,22 @@ void loop() {
 }
 
 void checkCountdown() {
-  SerialPrintln("------------ Checking Countdown...");
-
   //This will check if a day has passed since the last time the countdown was updated
   if (currentDeviceMode == DEVICE_MODE_COUNTDOWN) {
-    SerialPrintln("------------ Processing Countdown...");
     long countdownInSeconds = atol(countdownToDateUnix.c_str());
 
+    //Work out how long left
     long currentTimeSeconds = timezone.now();
     long differenceSeconds = countdownInSeconds - currentTimeSeconds;
-    
     long hours = differenceSeconds / 60 / 60;
-    long days = hours / 24;
 
-    String daysText = days + days == 1 ? " day" : " days";
+    //If there is any remainder, we want to actually still display the full day remaining 
+    long days = ceil(hours / 24.0);
 
+    //Make sure we don't go negative
+    days = days > 0 ? days : 0;
+    
+    String daysText = String(days) + (days == 1 ? " day" : " days");
     if (daysText.length() > UNITSAMOUNT) {
       SerialPrintln("Days Text was too long, cutting down to just the number...");
       daysText = "" + days;

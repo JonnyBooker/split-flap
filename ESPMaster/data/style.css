@@ -140,11 +140,11 @@ input[type=datetime-local] {
 	color: #F8880E;
 }
 
-.card .character-count {
+.card .count {
 	display: block;
 	font-size: 14px;
 }
-.card .character-count label {
+.card .count label {
 	font-size: 14px;
 }
 

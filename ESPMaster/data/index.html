@@ -14,7 +14,7 @@
 		<h4 class="float-right" style="text-align: right;">
 			Version: <label id="labelVersion">N/A</label>
 			<br>
-			Flaps: <label id="labelUnits">N/A</label>
+			Units: <label id="labelUnits">N/A</label>
 			<br>
 			Last Received: <label id="labelLastMessageReceived">N/A</label>
 		</h4>
@@ -78,11 +78,14 @@
 					
 					<div id="tab-text" class="tab">
 						<p>
-							<label for="inputText">Text</label>
+							<label for="inputText"></label>
 							<input type="text" id="inputText" name="inputText" onkeyup="updateCharacterCount()" autocomplete="off" maxlength="75" />
-							<span class="character-count">
+							<span class="count">
 								<label id="labelCharacterCount">0</label> Character(s)
-							</span>						
+							</span>
+							<span class="count">
+								<label id="labelLineCount">1</label> line(s)
+							</span>
 							<span>
 								<input type="button" value="+ Newline" onclick="addNewline()"/>
 							</span>
@@ -97,10 +100,13 @@
 						</p>				
 					</div>
 
-					
 					<div id="tab-countdown" class="tab hidden">
-						<input type="date" id="inputCountdownDateTime" name="countdownDateTime">
-						<input type="hidden" id="inputHiddenCountdownDateTimeUnix" name="countdownDateTimeUnix" />
+						<p>
+							<label for="inputCountdownDateTime">Countdown End Date</label>
+							<br>
+							<input type="date" id="inputCountdownDateTime" name="countdownDateTime">
+							<input type="hidden" id="inputHiddenCountdownDateTimeUnix" name="countdownDateTimeUnix" />
+						</p>
 					</div>
 	
 					<p>

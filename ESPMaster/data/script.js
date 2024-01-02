@@ -1,7 +1,11 @@
 //Used for local development use
 const localDevelopment = false;
 
-// Exception for german umlaute, replaces ä, ö, ü with unused unicode characters #, $, %
+//Various variables
+var unitCount = 0;
+var timezoneOffset = 0;
+
+//Used for submission!
 const form = document.getElementById('form');
 form.onsubmit = function () {
 	var containerSubmit = document.getElementById('containerSubmit');
@@ -15,8 +19,6 @@ form.onsubmit = function () {
 
 	containerSubmit.replaceWith(loadingIconContainer);
 
-	const deviceMode = document.querySelector('input[name="deviceMode"]:checked').value;
-
 	if (localDevelopment) {
 		setTimeout(function() {
 			location.reload();
@@ -25,21 +27,23 @@ form.onsubmit = function () {
 		return false;
 	}
 	else {
+		const deviceMode = document.querySelector('input[name="deviceMode"]:checked').value;
+		const tzOffset = timezoneOffset * 60000;
+
 		switch(deviceMode) {
 			case "text":
-				//Convert characters which don't translate directly	
-				var r = document.getElementById('inputText').value;
-				r = r.replace(/ä/gi, '$');
-				r = r.replace(/ö/gi, '&');
-				r = r.replace(/ü/gi, '#');
-				document.getElementById('inputText').value = r;
+				//Convert characters which don't translate directly, replaces ä, ö, ü with unused unicode characters #, $, &
+				var inputTextValue = document.getElementById('inputText').value;
+				inputTextValue = inputTextValue.replace(/ä/gi, '$');
+				inputTextValue = inputTextValue.replace(/ö/gi, '&');
+				inputTextValue = inputTextValue.replace(/ü/gi, '#');
+				document.getElementById('inputText').value = inputTextValue;
 
 				//Set the hidden date time to UNIX
 				var currentScheduledDateTimeText = document.getElementById('inputScheduledDateTime').value;
 
 				//Take into account the timezone offset when we generate the unix timestamp
 				var currentScheduledDateTime = new Date(currentScheduledDateTimeText);
-				var tzOffset = (new Date().getTimezoneOffset() * 60000);
 				var time = Math.floor((currentScheduledDateTime.getTime() - tzOffset) / 1000);
 				document.getElementById('inputHiddenScheduledDateTimeUnix').value = time;
 
@@ -50,7 +54,6 @@ form.onsubmit = function () {
 
 				//Take into account the timezone offset when we generate the unix timestamp
 				var currentCountdownDateTime = new Date(currentCountdownDateTimeText);
-				var tzOffset = (new Date().getTimezoneOffset() * 60000);
 				var time = Math.floor((currentCountdownDateTime.getTime() - tzOffset) / 1000);
 				document.getElementById('inputHiddenCountdownDateTimeUnix').value = time;
 
@@ -62,6 +65,75 @@ form.onsubmit = function () {
 // Retrieve current Split-Flap settings when the page loads/refreshes
 window.addEventListener('load', loadPage);
 
+// Request and retrieve settings from ESP-01s filesystem
+function loadPage() {
+	//Show messages from the server if need be
+	const urlParams = new URLSearchParams(location.search);
+	if (urlParams.get('invalid-submission') === "true") {
+		showBannerMessage(`
+			Something went wrong during submission. Feel free to try again, ensure that you have entered valid information.
+			<br>
+			Ensure things like dates provided for schedules/countdowns are in the future.
+		`);
+	}
+	else if (urlParams.get('is-resetting-units') === "true") {
+		showBannerMessage(`
+			Display is now resetting/re-calibrating. It should only take a few seconds.
+			<br>
+			It will display different characters in order to carry this out and then go back to the last thing being displayed.
+		`);
+	}
+	
+	//Set date time fields to be a minimum of todays date/time add 1 minute
+	var tzOffset = timezoneOffset * 60000;
+	document.querySelectorAll('input[type="datetime-local"]').forEach((dateTimeElement) => {
+		var currentDateTime = (new Date(Date.now() - tzOffset + 60000)).toISOString().slice(0, -8);
+		dateTimeElement.value = dateTimeElement.min = currentDateTime;
+	});
+
+	if (localDevelopment) {
+		setSpeed("80");
+		setSavedMode("text");
+		setAlignment("left");
+		setVersion("Development")
+		setUnitCount("10");
+		setLastReceviedMessage("Some Time", "Hello World");
+		setCountdownDate((Date.now() / 1000) + (24 * 60 * 60));
+		showScheduledMessages([
+			{
+				"scheduledDateTimeUnix": 1690134480,
+				"message": "Test Message 1"
+			},
+		]);
+	}
+	else {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function () {
+			if (this.readyState == 4 && this.status == 200) {
+				var responseObject = JSON.parse(this.responseText);
+				
+				timezoneOffset = responseObject.timezoneOffset;
+
+				setSpeed(responseObject.flapSpeed);
+				setSavedMode(responseObject.deviceMode);
+				setAlignment(responseObject.alignment);
+				setVersion(responseObject.version);
+				setUnitCount(responseObject.unitCount);
+				setCountdownDate(responseObject.countdownToDateUnix);
+				setLastReceviedMessage(responseObject.lastTimeReceivedMessageDateTime, responseObject.lastInputMessage);
+				
+				if (responseObject.scheduledMessages) {
+					showScheduledMessages(responseObject.scheduledMessages);
+				}
+			}
+		};
+
+		xhr.open("GET", "/settings", true);
+		xhr.send();
+	}
+}
+
+// Shows a message up top of the page should the server request one to be shown
 function showBannerMessage(message, hideAfterDuration) {
 	var bannerMessageElement = document.getElementById('bannerMessage'); 
 	bannerMessageElement.innerHTML = message;
@@ -75,93 +147,18 @@ function showBannerMessage(message, hideAfterDuration) {
 	}
 }
 
-// Request and retrieve settings from ESP-01s filesystem
-function loadPage() {
-	//Show messages from the server if need be
-	const urlParams = new URLSearchParams(location.search);
-	const errorMessage = urlParams.get('error-message');
-	if (errorMessage !== null) {
-		showBannerMessage(errorMessage);
-	}
-	else if (urlParams.get('is-resetting-units') === "true") {
-		showBannerMessage(`
-			Display is now resetting/re-calibrating. It should only take a few seconds.
-			<br>
-			It will display different characters in order to carry this out and then go back to the last thing being displayed.
-		`);
-	}
-
-	if (localDevelopment) {
-		setSpeed("80");
-		setSavedMode("text");
-		setAlignment("left");
-		setVersion("Development")
-		setUnitCount("10");
-		setLastReceviedMessage("Some Time", "Hello World");
-		showScheduledMessages([
-			{
-				"scheduledDateTimeUnix": 1690134480,
-				"message": "Test Message 1"
-			},
-		]);
-	}
-	else {
-		var tzOffset = (new Date().getTimezoneOffset() * 60000);
-		var currentTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -8);
-		var dateTimeElement = document.querySelector('input[type="datetime-local"]');
-		dateTimeElement.value = dateTimeElement.min = currentTime;
-
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function () {
-			if (this.readyState == 4 && this.status == 200) {
-				var responseObject = JSON.parse(this.responseText);
-				console.log(responseObject);
-
-				//set slider value from retrieved value
-				if (responseObject.flapSpeed) {
-					setSpeed(responseObject.flapSpeed);
-				}
-
-				//set mode from retrieved value
-				if (responseObject.deviceMode) {
-					setSavedMode(responseObject.deviceMode);
-				}
-
-				//set text alignment from retrieved value
-				if (responseObject.alignment) {
-					setAlignment(responseObject.alignment);
-				}
-
-				//set the version of the server
-				if (responseObject.version) {
-					setVersion(responseObject.version);
-				}
-
-				//set the amount of flaps we will be working with
-				if (responseObject.unitCount) {
-					setUnitCount(responseObject.unitCount);
-				}
-
-				//set the scheduled messages
-				if (responseObject.scheduledMessages) {
-					showScheduledMessages(responseObject.scheduledMessages);
-				}
-
-				setLastReceviedMessage(responseObject.lastTimeReceivedMessage, 
-					responseObject.lastInputMessage);
-			}
-		};
-
-		xhr.open("GET", "/settings", true);
-		xhr.send();
-	}
-}
-
+//Ongoing show how many characters are being used
 function updateCharacterCount() {
 	var length = document.getElementById('inputText').value.replaceAll("\\n", "").length;
-	document.getElementById("labelCharacterCount").innerHTML = length;
+
+	var labelCharacterCount = document.getElementById("labelCharacterCount");
+	var labelLineCount = document.getElementById("labelLineCount");
+
+	labelCharacterCount.innerHTML = length;
+	labelLineCount.innerHTML = Math.ceil(length / unitCount);
 }
 
+//Easy add a newline
 function addNewline() {
 	var inputTextElement = document.getElementById('inputText'); 
 	var textWithNewline = inputTextElement.value + "\\n";
@@ -187,13 +184,13 @@ function deleteScheduledMessage(id, message) {
 	xhr.send();
 }
 
-//ppdates slider value while sliding
+//Updates slider value while sliding
 function updateSpeedSlider() {
 	var sliderValue = document.getElementById("rangeFlapSpeed").value;
 	document.getElementById("rangeFlapSpeedValue").innerHTML = sliderValue + " %";
 }
 
-//sets mode by checking corresponding radio button/tab
+//Sets mode by checking corresponding radio button/tab
 function setSavedMode(mode) {
 	switch (mode) {
 		case "text":
@@ -213,7 +210,7 @@ function setSavedMode(mode) {
 	setDeviceModeTab(mode);
 }
 
-//shows/hides the tab associated with the device mode
+//Shows/hides the tab associated with the device mode
 function setDeviceModeTab(mode) {
 	document.querySelectorAll('.tab').forEach(function(tab) {
 		if (!tab.classList.contains("hidden")) {
@@ -228,13 +225,13 @@ function setDeviceModeTab(mode) {
 	}
 }
 
-//sets flap speed by setting the ranges
+//Sets flap speed by setting the ranges
 function setSpeed(speed) {
 	document.getElementById("rangeFlapSpeedValue").innerHTML = speed + " %";
 	document.getElementById("rangeFlapSpeed").value = speed;
 }
 
-//sets alignment by checking corresponding radio button
+//Sets alignment by checking corresponding radio button
 function setAlignment(alignment) {
 	switch (alignment) {
 		case "left":
@@ -249,23 +246,52 @@ function setAlignment(alignment) {
 	}
 }
 
-//sets the version on the UI just for awareness
+//Sets the version on the UI just for awareness
 function setVersion(version) {
 	document.getElementById("labelVersion").innerHTML = version;
 }
 
-//sets the version on the UI just for awareness
-function setUnitCount(unitCount) {
-	document.getElementById("labelUnits").innerHTML = unitCount;
+//Sets the version on the UI just for awareness
+function setUnitCount(count) {
+	document.getElementById("labelUnits").innerHTML = count;
+	unitCount = count;
 }
 
-//sets the last received post message to the server
+//Sets the version on the UI just for awareness
+function setCountdownDate(dateUnix) {
+	//Set date fields to be a minimum of tomorrows date
+	var currentCountdownDate = document.getElementById('inputCountdownDateTime');
+	var tzOffset = timezoneOffset * 60000;
+
+	var currentDate = (new Date(Date.now() - tzOffset));
+	var nextDayDate = new Date();
+	nextDayDate.setDate(currentDate.getDate() + 1);
+
+	//If one has been set and it is not exceeded
+	if (dateUnix !== 0) {
+		var countdownDate = new Date(dateUnix * 1000);
+		if (countdownDate > currentDate) {
+			currentCountdownDate.value = countdownDate.toISOString().slice(0, 10);
+			return;
+		}
+	}
+
+	//Set date fields to be a minimum of tomorrows date
+	var currentDate = (new Date(Date.now() - tzOffset));
+	var nextDayDate = new Date();
+	nextDayDate.setDate(currentDate.getDate() + 1);
+	
+	currentCountdownDate.value = currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
+}
+
+//Sets the last received post message to the server
 function setLastReceviedMessage(time, lastMessage) {
 	const timeMessage = time == "" ? "N/A" : time;
 	const textMessage = lastMessage == "" ? "N/A" : lastMessage;
 	document.getElementById("labelLastMessageReceived").innerHTML = `${textMessage} @ ${timeMessage}`;
 }
 
+//Used for scheduling messages
 function showHideScheduledMessageInput() {
 	var dateTimeElement = document.getElementById("inputScheduledDateTime");
 	var checkboxScheduled = document.getElementById("inputCheckboxScheduleEnabled");
@@ -278,6 +304,7 @@ function showHideScheduledMessageInput() {
 	}
 }
 
+//Formats and displays all scheduled messages in a "nice" format
 function showScheduledMessages(scheduledMessages) {
 	var elementMessageCount = document.getElementById("spanScheduledMessageCount");
 	elementMessageCount.innerText = scheduledMessages.length;
@@ -295,7 +322,7 @@ function showScheduledMessages(scheduledMessages) {
 		//Create a element to show the time
 		var timeElement = document.createElement("div");
 		timeElement.className = "time";
-		timeElement.innerText = new Date((scheduledMessage.scheduledDateTimeUnix * 1000) + (new Date().getTimezoneOffset() * 60000)).toString().slice(0, -34);
+		timeElement.innerText = new Date((scheduledMessage.scheduledDateTimeUnix * 1000) + (timezoneOffset * 60000)).toString().slice(0, -34);
 
 		//Create a element to show the text
 		var textElement = document.createElement("div");

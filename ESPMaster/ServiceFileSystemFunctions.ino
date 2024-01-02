@@ -20,19 +20,20 @@ void loadValuesFromFileSystem() {
   SerialPrintln("   Alignment: " + alignment);
   SerialPrintln("   Flap Speed: " + flapSpeed);
   SerialPrintln("   Device Mode: " + currentDeviceMode);
-  SerialPrintln("   Countdown to Date in Seconds: " + countdownToDateUnix);
+  SerialPrintln("   Countdown to Date UNIX: " + countdownToDateUnix);
 }
 
 //Gets all the currently stored calues from memory in a JSON object
 String getCurrentSettingValues() {
   JSONVar values;
 
+  values["timezoneOffset"] = timezone.getOffset();
   values["unitCount"] = UNITSAMOUNT;
   values["alignment"] = alignment;
   values["flapSpeed"] = flapSpeed;
   values["deviceMode"] = currentDeviceMode;
   values["version"] = espVersion;
-  values["lastTimeReceivedMessage"] = lastReceivedMessageDateTime;
+  values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
   values["lastInputMessage"] = inputText;
   values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
 

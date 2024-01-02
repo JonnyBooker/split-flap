@@ -1,9 +1,12 @@
 //Shows a new message on the display
 void showText(String message) {  
   if (lastWrittenText != message) { 
+    String lastWrittenTextDisplay = lastWrittenText == "" ? "<Blank>" : lastWrittenText;
+    String messageDisplay = message == "" ? "<Blank>" : message;
+
     SerialPrintln("Showing new Message");
-    SerialPrintln("Last Written Text: " + lastWrittenText);
-    SerialPrintln("New Message: " + message);
+    SerialPrintln("Last Written Text: " + lastWrittenTextDisplay);
+    SerialPrintln("New Message: " + messageDisplay);
   
     LinkedList<String> messageLines = processSentenceToLines(message);
 
