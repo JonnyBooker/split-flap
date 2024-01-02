@@ -7,6 +7,8 @@ This project has built on the original project to add extra features such as:
 - Message Splittng
   - If a message is longer then the number of units there are, the message will be split up and displayed in sequence with a delay between each message
   - Also messages can be split up by adding a `\n`
+- Countdown Mode
+  - Countdown in days to a specified date
 - Reworked UI
   - Can see messages scheduled to be displayed and option to remove them
   - See extra information on the UI such as:
