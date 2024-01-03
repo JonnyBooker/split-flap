@@ -98,7 +98,7 @@ function loadPage() {
 		setAlignment("left");
 		setVersion("Development")
 		setUnitCount("10");
-		setLastReceviedMessage("Some Time", "Hello World");
+		setLastReceivedMessage(new Date().toLocaleString());
 		setCountdownDate((Date.now() / 1000) + (24 * 60 * 60));
 		showScheduledMessages([
 			{
@@ -121,7 +121,7 @@ function loadPage() {
 				setVersion(responseObject.version);
 				setUnitCount(responseObject.unitCount);
 				setCountdownDate(responseObject.countdownToDateUnix);
-				setLastReceviedMessage(responseObject.lastTimeReceivedMessageDateTime, responseObject.lastInputMessage);
+				setLastReceivedMessage(responseObject.lastTimeReceivedMessageDateTime);
 				
 				if (responseObject.scheduledMessages) {
 					showScheduledMessages(responseObject.scheduledMessages);
@@ -286,10 +286,9 @@ function setCountdownDate(dateUnix) {
 }
 
 //Sets the last received post message to the server
-function setLastReceviedMessage(time, lastMessage) {
+function setLastReceivedMessage(time) {
 	const timeMessage = time == "" ? "N/A" : time;
-	const textMessage = lastMessage == "" ? "N/A" : lastMessage;
-	document.getElementById("labelLastMessageReceived").innerHTML = `${textMessage} @ ${timeMessage}`;
+	document.getElementById("labelLastMessageReceived").innerHTML = timeMessage;
 }
 
 //Used for scheduling messages

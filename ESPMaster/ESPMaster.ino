@@ -30,9 +30,6 @@ Split Flap ESP Master
 //OTA Libary
 #ifdef OTA_ENABLE
 #include <ArduinoOTA.h>
-
-//Used to denote that the system has gone into OTA mode
-bool isInOtaMode = 0;
 #endif
 
 //The current version of code to display on the UI
@@ -330,7 +327,7 @@ void setup() {
   
             writeFile(LittleFS, alignmentPath, alignment.c_str());
             
-            SerialPrint("Alignment set to: " + alignment);
+            SerialPrintln("Alignment set to: " + alignment);
           }
           else {
             SerialPrintln("Alignment provided was not valid. Value: " + receivedValue); 
@@ -388,9 +385,10 @@ void setup() {
 
         //HTTP POST Schedule Seconds
         if (p->name() == PARAM_SCHEDULE_DATE_TIME) {
-          newMessageScheduledDateTimeUnix = atol(p->value().c_str());
+          String scheduledDateTimeUnix = p->value().c_str();
+          newMessageScheduledDateTimeUnix = atol(scheduledDateTimeUnix.c_str());
 
-          SerialPrintln("Schedule Date Time set to: " + newMessageScheduledDateTimeUnix);
+          SerialPrintln("Schedule Date Time set to: " + scheduledDateTimeUnix);
         }
 
         //HTTP POST Countdown Seconds
@@ -403,13 +401,16 @@ void setup() {
           SerialPrintln("Countdown Date set to: " + countdownToDateUnix);
         }
       }
-    }
+    }    
 
     //If there was an error, report back to check what has been input
     if (submissionError) {
+      SerialPrintln("Finished Processing Request with Error");
       request->redirect("/?invalid-submission=" + true);
     }
     else {
+      SerialPrintln("Finished Processing Request Successfully");
+
       //Delay to give time to process the scheduled message so can be returned on "redirect"
       delay(1024);
 
