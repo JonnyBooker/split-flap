@@ -490,94 +490,10 @@ void loop() {
       showText(inputText);
     } 
     else if (currentDeviceMode == DEVICE_MODE_DATE) {
-      showDate();
+      showText(timezone.dateTime(dateFormat));
     } 
     else if (currentDeviceMode == DEVICE_MODE_CLOCK) {
-      showClock();
+      showText(timezone.dateTime(clockFormat));
     } 
-  }
-}
-
-void checkCountdown() {
-  //This will check if a day has passed since the last time the countdown was updated
-  if (currentDeviceMode == DEVICE_MODE_COUNTDOWN) {
-    long countdownInSeconds = atol(countdownToDateUnix.c_str());
-
-    //Work out how long left
-    long currentTimeSeconds = timezone.now();
-    long differenceSeconds = countdownInSeconds - currentTimeSeconds;
-    long hours = differenceSeconds / 60 / 60;
-
-    //If there is any remainder, we want to actually still display the full day remaining 
-    long days = ceil(hours / 24.0);
-
-    //Make sure we don't go negative
-    days = days > 0 ? days : 0;
-    
-    String daysText = String(days) + (days == 1 ? " day" : " days");
-    if (daysText.length() > UNITSAMOUNT) {
-      SerialPrintln("Days Text was too long, cutting down to just the number...");
-      daysText = "" + days;
-    }
-
-    if (inputText != daysText) {
-      SerialPrintln("Setting Countdown Text to: " + daysText);
-      inputText = daysText;
-    }
-  }
-}
-
-void checkScheduledMessages() {   
-  //Add the message to the scheduled list and mark as no longer scheduled
-  //set the last written message to the scheduled one so don't repeat
-  if (newMessageScheduleEnabled) {
-    SerialPrintln("Processing New Scheduled Message");
-
-    //Find the existing scheduled message and update it if one exists
-    for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
-      ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
-
-      if (newMessageScheduledDateTimeUnix == scheduledMessage.ScheduledDateTimeUnix) {
-        SerialPrintln("Removing Existing Scheduled Message due to be shown, it will be replaced");
-        scheduledMessages.remove(scheduledMessageIndex);
-        break;
-      }
-    }
-
-    //If we haven't just updated one, then we need to add it
-    if (newMessageScheduledDateTimeUnix > timezone.now()) {
-      SerialPrintln("Adding new Scheduled Message");
-      scheduledMessages.add({inputText, newMessageScheduledDateTimeUnix});
-    }
-
-    //No longer got a scheduled message to process
-    newMessageScheduleEnabled = false;
-
-    //Only if we are in text mode, do we change the current input text to the last written message 
-    //so it doesn't write the scheduled message, otherwise, it will affect other modes
-    if (currentDeviceMode == DEVICE_MODE_TEXT) {
-      inputText = lastWrittenText;
-    }
-  }
-
-  //Iterate over the current bunch of scheduled messages. If we find one where the current time exceeds when we should show
-  //the message, then we need to show that message immediately
-  unsigned long currentTimeUnix = timezone.now();
-  for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
-    ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
-
-    if (currentTimeUnix > scheduledMessage.ScheduledDateTimeUnix) {
-      SerialPrintln("Scheduled Message due to be shown: " + scheduledMessage.Message);
-
-      //Set the next message to 
-      inputText = scheduledMessage.Message;
-
-      //Set the device mode to "Text" so can show a scheduled message
-      previousDeviceMode = currentDeviceMode;
-      currentDeviceMode = DEVICE_MODE_TEXT;
-
-      scheduledMessages.remove(scheduledMessageIndex);
-      break;
-    }
   }
 }
