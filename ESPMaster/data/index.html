@@ -123,11 +123,12 @@
 				<p class="card-title">Actions</p>
 
 				<p>
-					<a href="/ota">OTA Update</a>
-					<a href="/reboot">Reboot</a>
+					<a href="/ota" onclick="return confirm('Are you sure you want to put device in OTA mode?')">OTA Update</a>
+					<a href="/reboot" onclick="return confirm('Are you sure you want reboot device?')">Reboot</a>
 				</p>
 				<p>
-					<a href="/reset-units">Reset Unit Calibration</a>
+					<a href="/reset-units" onclick="return confirm('Are you sure you want to Reset Units?')">Reset Unit Calibration</a>
+					<a href="/reset-wifi" onclick="return confirm('Are you sure you want to Reset WiFi settings?')">Reset WiFi Settings</a>
 				</p>
 			</div>
 		</div>
