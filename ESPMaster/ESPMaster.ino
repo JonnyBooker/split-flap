@@ -1,21 +1,62 @@
+/* ####################################################################################################################### */
+/* # ____  ____  _     ___ _____   _____ _        _    ____    _____ ____  ____    __  __    _    ____ _____ _____ ____  # */
+/* #/ ___||  _ \| |   |_ _|_   _| |  ___| |      / \  |  _ \  | ____/ ___||  _ \  |  \/  |  / \  / ___|_   _| ____|  _ \ # */
+/* #\___ \| |_) | |    | |  | |   | |_  | |     / _ \ | |_) | |  _| \___ \| |_) | | |\/| | / _ \ \___ \ | | |  _| | |_) |# */
+/* # ___) |  __/| |___ | |  | |   |  _| | |___ / ___ \|  __/  | |___ ___) |  __/  | |  | |/ ___ \ ___) || | | |___|  _ < # */
+/* #|____/|_|   |_____|___| |_|   |_|   |_____/_/   \_|_|     |_____|____/|_|     |_|  |_/_/   \_|____/ |_| |_____|_| \_\# */
+/* ####################################################################################################################### */
 /*
-*********************
-Split Flap ESP Master
-*********************
+  This project project is done for fun as part of: https://github.com/JonnyBooker/split-flap
+  None of this would be possible without the brilliant work of David Königsmann: https://github.com/Dave19171/split-flap
+
+  Licensed under GNU: https://github.com/JonnyBooker/split-flap/blob/master/LICENSE
 */
-#define BAUDRATE 115200     //Serial debugging BAUD rate
-#define ANSWERSIZE 1        //Size of unit's request answer
-#define UNITSAMOUNT 10      //Amount of connected units !IMPORTANT!
-#define FLAPAMOUNT 45       //Amount of Flaps in each unit
-#define MINSPEED 1          //Min Speed
-#define MAXSPEED 12         //Max Speed
-#define OTA_ENABLE          //Comment out to disable OTA functionality
-#define WIFI_SETUP_MODE AP  //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Options: AP or DIRECT
-#define WEBSERVER_H         //Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
 
-#define SERIAL_ENABLE       //Uncomment for serial debug messages, no serial messages if this whole line is a comment!
-#define UNIT_CALLS_DISABLE  //Disable the call to the units so can just debug the ESP
+/* .--------------------------------------------------------------------------------. */
+/* |  ___           __ _                    _    _       ___       __ _             | */
+/* | / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |__| |___  |   \ ___ / _(_)_ _  ___ ___| */
+/* || (__/ _ | ' \|  _| / _` | || | '_/ _` | '_ | / -_) | |) / -_|  _| | ' \/ -_(_-<| */
+/* | \___\___|_||_|_| |_\__, |\_,_|_| \__,_|_.__|_\___| |___/\___|_| |_|_||_\___/__/| */
+/* |                    |___/                                                       | */
+/* '--------------------------------------------------------------------------------' */
+/*
+  These define statements can be changed as you desire for changing the functionality and
+  behaviour of your device.
+*/
+#define SERIAL_ENABLE           //Uncomment for serial debug messages, no serial messages if this whole line is a comment!
+#define UNIT_CALLS_DISABLE      //Disable the call to the units so can just debug the ESP
+#define OTA_ENABLE              //Comment out to disable OTA functionality
+#define UNITS_AMOUNT 10         //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
+#define SERIAL_BAUDRATE 115200  //Serial debugging BAUD rate
+#define WIFI_SETUP_MODE AP      //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Options: AP or DIRECT
 
+/* .--------------------------------------------------------. */
+/* | ___         _               ___       __ _             | */
+/* |/ __|_  _ __| |_ ___ _ __   |   \ ___ / _(_)_ _  ___ ___| */
+/* |\__ | || (_-|  _/ -_| '  \  | |) / -_|  _| | ' \/ -_(_-<| */
+/* ||___/\_, /__/\__\___|_|_|_| |___/\___|_| |_|_||_\___/__/| */
+/* |     |__/                                               | */
+/* '--------------------------------------------------------' */
+/*
+  These are important to maintain normal system behaviour. Only change if you know 
+  what your doing.
+*/
+#define ANSWER_SIZE 1           //Size of unit's request answer
+#define FLAP_AMOUNT 45          //Amount of Flaps in each unit
+#define MIN_SPEED 1             //Min Speed
+#define MAX_SPEED 12            //Max Speed
+#define WEBSERVER_H             //Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
+
+/* .-----------------------------------. */
+/* | _    _ _                 _        | */
+/* || |  (_| |__ _ _ __ _ _ _(_)___ ___| */
+/* || |__| | '_ | '_/ _` | '_| / -_(_-<| */
+/* ||____|_|_.__|_| \__,_|_| |_\___/__/| */
+/* '-----------------------------------' */
+/*
+  External library dependencies, not much more to say!
+*/
+//Specifically put here in this order to avoid conflict
 #include <WiFiManager.h>
 #include <ESP8266WiFi.h>
 
@@ -28,23 +69,29 @@ Split Flap ESP Master
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
-
 #include "Classes.h"
 #include "LittleFS.h"
 
-//OTA Libary
+//OTA Libary if we are into that kind of thing
 #ifdef OTA_ENABLE
 #include <ArduinoOTA.h>
 #endif
 
-//The current version of code to display on the UI
-const char* espVersion = "1.4.0";
-
+/* .------------------------------------------------------------------------------------. */
+/* |  ___           __ _                    _    _       ___     _   _   _              | */
+/* | / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |__| |___  / __|___| |_| |_(_)_ _  __ _ ___| */
+/* || (__/ _ | ' \|  _| / _` | || | '_/ _` | '_ | / -_) \__ / -_|  _|  _| | ' \/ _` (_-<| */
+/* | \___\___|_||_|_| |_\__, |\_,_|_| \__,_|_.__|_\___| |___\___|\__|\__|_|_||_\__, /__/| */
+/* |                    |___/                                                  |___/    | */
+/* '------------------------------------------------------------------------------------' */
+/*
+  Settings you can feel free to change to customise how your display works.
+*/
 //Used if connecting via "WIFI_SETUP_MODE" of "AP"
-const char* ssid = "";
-const char* password = "";
+const char* wifiDirectSsid = "";
+const char* wifiDirectPassword = "";
 
-//Change if you want to have an OTA Password
+//Change if you want to have an Over The Air (OTA) Password for updates
 const char* otaPassword = "";
 
 //Change this to your timezone, use the TZ database name
@@ -56,20 +103,24 @@ const char* timezoneString = "Europe/London";
 const char* dateFormat = "d.m.Y"; //Examples: d.m.Y -> 11.09.2021, D M y -> SAT SEP 21
 const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 
+/* .------------------------------------------------------------. */
+/* | ___         _               ___     _   _   _              | */
+/* |/ __|_  _ __| |_ ___ _ __   / __|___| |_| |_(_)_ _  __ _ ___| */
+/* |\__ | || (_-|  _/ -_| '  \  \__ / -_|  _|  _| | ' \/ _` (_-<| */
+/* ||___/\_, /__/\__\___|_|_|_| |___\___|\__|\__|_|_||_\__, /__/| */
+/* |     |__/                                          |___/    | */
+/* '------------------------------------------------------------' */
+/*
+  Used for normal running of the system so changing things here might make things 
+  behave a little strange.
+*/
+//The current version of code to display on the UI
+const char* espVersion = "1.4.0";
+
+//All the letters on the units that we have to be displayed. You can change these if it so pleases at your own risk
 const char letters[] = {' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '&', '#', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '.', '-', '?', '!'};
-int displayState[UNITSAMOUNT];
+int displayState[UNITS_AMOUNT];
 unsigned long previousMillis = 0;
-
-//Variables for storing text for the display to use
-String lastWrittenText = "";
-LinkedList<ScheduledMessage> scheduledMessages;
-
-//Create AsyncWebServer object on port 80
-AsyncWebServer webServer(80);
-
-//Used for creating a Access Point to allow WiFi setup
-WiFiManager wifiManager;
-bool wifiConfigured = false;
 
 //Search for parameter in HTTP POST request
 const char* PARAM_ALIGNMENT = "alignment";
@@ -92,60 +143,69 @@ const char* ALIGNMENT_MODE_LEFT = "left";
 const char* ALIGNMENT_MODE_CENTER = "center";
 const char* ALIGNMENT_MODE_RIGHT = "right";
 
-//Variables to save values from HTML form
-String alignment = "";
-String flapSpeed = "";
-String inputText = "";
-String previousDeviceMode = "";
-String currentDeviceMode = "";
-String countdownToDateUnix = "";
-long newMessageScheduledDateTimeUnix = 0;
-bool newMessageScheduleEnabled = false;
-
 //File paths to save input values permanently
 const char* alignmentPath = "/alignment.txt";
 const char* flapSpeedPath = "/flapspeed.txt";
 const char* deviceModePath = "/devicemode.txt";
 const char* countdownPath = "/countdown.txt";
 
-//Create ezTime timezone object
+//Variables for storing things for checking and use in normal running
+String alignment = "";
+String flapSpeed = "";
+String inputText = "";
+String previousDeviceMode = "";
+String currentDeviceMode = "";
+String countdownToDateUnix = "";
+String lastWrittenText = "";
+String lastReceivedMessageDateTime = "";
+long newMessageScheduledDateTimeUnix = 0;
+bool newMessageScheduleEnabled = false;
+bool isPendingReboot = false;
+bool isPendingUnitsReset = false;
+LinkedList<ScheduledMessage> scheduledMessages;
 Timezone timezone; 
 
-//Denotes the system is pending a restart
-bool isPendingReboot = 0;
+//Create AsyncWebServer object on port 80
+AsyncWebServer webServer(80);
 
-//Denotes the system needs calibrating
-bool isPendingUnitsReset = 0;
+//Used for creating a Access Point to allow WiFi setup
+WiFiManager wifiManager;
+bool wifiConfigured = false;
 
 //Used to denote that the system has gone into OTA mode
 #ifdef OTA_ENABLE
 bool isInOtaMode = 0;
 #endif
 
-//Used for display on the UI
-String lastReceivedMessageDateTime;
-
+/* .-----------------------------------------------. */
+/* | ___          _          ___     _             | */
+/* ||   \ _____ _(_)__ ___  / __|___| |_ _  _ _ __ | */
+/* || |) / -_\ V | / _/ -_) \__ / -_|  _| || | '_ \| */
+/* ||___/\___|\_/|_\__\___| |___\___|\__|\_,_| .__/| */
+/* |                                         |_|   | */
+/* '-----------------------------------------------' */
 void setup() {
-  //Serial port for debugging purposes
 #ifdef SERIAL_ENABLE
-  Serial.begin(BAUDRATE);
+  Serial.begin(SERIAL_BAUDRATE);
 #endif
 
   SerialPrintln("#######################################################");
   SerialPrintln("Master module starting...");
 
-  //deactivate I2C if debugging the ESP, otherwise serial does not work
+  //De-activate I2C if debugging the ESP, otherwise serial does not work
 #ifndef SERIAL_ENABLE
-  Wire.begin(1, 3); //For ESP01 only
+  //For ESP01 only
+  Wire.begin(1, 3); 
 #endif
   //Wire.begin(D1, D2); //For NodeMCU testing only SDA=D1 and SCL=D2
 
   //Load and read all the things
   initialiseFileSystem();
   loadValuesFromFileSystem();
+  //wifiManager.resetSettings();
   initWiFi();
 
-  if (wifiConfigured) {
+  if (wifiConfigured && !isPendingReboot) {
     //ezTime initialization
     waitForSync();
     timezone.setLocation(timezoneString);
@@ -209,8 +269,7 @@ void setup() {
       SerialPrintln("Request to Reset WiFi Received");
       
 #if WIFI_SETUP_MODE == AP
-      wifiManager.resetSettings();
-
+      SerialPrintln("WiFi mode set to AP so will reset WiFi settings");
       IPAddress ip = WiFi.localIP();
       
       String html = "<div style='text-align:center'>";
@@ -223,9 +282,15 @@ void setup() {
       html += "</div>";
       
       request->send(200, "text/html", html);
-      isPendingReboot = 1;
-#else
+
+      delay(5024);
+
+      SerialPrintln("Done waiting");
       
+      //wifiManager.resetSettings();
+      //isPendingReboot = 1;
+#else
+      SerialPrintln("WiFi mode is not AP so nothing can be done here");
       IPAddress ip = WiFi.localIP();
       
       String html = "<div style='text-align:center'>";
@@ -463,15 +528,43 @@ void setup() {
       }
     });
 #endif
+
+    delay(250);
+    webServer.begin();
+
+    SerialPrintln("Master module ready!");
+    SerialPrintln("#######################################################");
   }
   else {
-    SerialPrintln("Unable to connect to WiFi... Not starting web server");
-    SerialPrintln("Please restart to try connect again");
-    SerialPrintln("#######################################################");
+    if (isPendingReboot) {
+      SerialPrintln("Reboot is pending to be able to continue device function. Hold please...");
+      SerialPrintln("#######################################################");
+    }
+    else {
+      SerialPrintln("Unable to connect to WiFi... Not starting web server");
+      SerialPrintln("Please hard restart your device to try connect again");
+      SerialPrintln("#######################################################");
+    }
   }
 }
 
+/* .----------------------------------------------------. */
+/* | ___                _             _                 | */
+/* || _ \_  _ _ _  _ _ (_)_ _  __ _  | |   ___ ___ _ __ | */
+/* ||   | || | ' \| ' \| | ' \/ _` | | |__/ _ / _ | '_ \| */
+/* ||_|_\\_,_|_||_|_||_|_|_||_\__, | |____\___\___| .__/| */
+/* |                          |___/               |_|   | */
+/* '----------------------------------------------------' */
 void loop() {
+  //Reboot in here as if we restart within a request handler, no response is returned
+  if (isPendingReboot) {
+    SerialPrintln("Rebooting Now... Fairwell!");
+    SerialPrintln("#######################################################");
+    delay(200);
+    ESP.restart();
+    return;
+  }
+
   //Do nothing if WiFi is not configured
   if (!wifiConfigured) {
     //Show there is an error via text on display
@@ -479,15 +572,8 @@ void loop() {
     alignment = ALIGNMENT_MODE_CENTER;
     showText("OFFLINE");
     delay(100);
-    
-    return;
-  }
 
-  //Reboot in here as if we restart within a request handler, no response is returned
-  if (isPendingReboot) {
-    SerialPrintln("Rebooting Now...");
-    delay(200);
-    ESP.restart();
+    return;
   }
 
   if (isPendingUnitsReset) {

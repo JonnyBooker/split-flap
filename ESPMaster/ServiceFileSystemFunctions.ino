@@ -28,7 +28,7 @@ String getCurrentSettingValues() {
   JSONVar values;
 
   values["timezoneOffset"] = timezone.getOffset();
-  values["unitCount"] = UNITSAMOUNT;
+  values["unitCount"] = UNITS_AMOUNT;
   values["alignment"] = alignment;
   values["flapSpeed"] = flapSpeed;
   values["deviceMode"] = currentDeviceMode;

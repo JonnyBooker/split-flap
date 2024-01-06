@@ -107,7 +107,7 @@ void showMessage(String message, int flapSpeed) {
 
 //Translates char to letter position
 int translateLettertoInt(char letterchar) {
-  for (int i = 0; i < FLAPAMOUNT; i++) {
+  for (int i = 0; i < FLAP_AMOUNT; i++) {
     if (letterchar == letters[i]) {
       return i;
     }
@@ -134,7 +134,7 @@ void writeToUnit(int address, int letter, int flapSpeed) {
 //Checks if unit in display is currently moving
 bool isDisplayMoving() {
   //Request all units moving state and write to array
-  for (int i = 0; i < UNITSAMOUNT; i++) {
+  for (int i = 0; i < UNITS_AMOUNT; i++) {
     displayState[i] = checkIfMoving(i);
     if (displayState[i] == 1) {
       SerialPrintln("A unit in the display is busy");
@@ -154,7 +154,7 @@ bool isDisplayMoving() {
 //Checks if single unit is moving
 int checkIfMoving(int address) {
   int active;
-  Wire.requestFrom(address, ANSWERSIZE, 1);
+  Wire.requestFrom(address, ANSWER_SIZE, 1);
   active = Wire.read();
 
   SerialPrint(address);

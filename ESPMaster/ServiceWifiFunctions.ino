@@ -26,14 +26,14 @@ void initWiFi() {
 
     wifiConfigured = true;
   }
-
+  
 #else
   SerialPrintln("Setting up WiFi Direct");
 
   if (ssid != "" && password != "") {
     int maxAttemptsCount = 0;
     
-    WiFi.begin(ssid, password);
+    WiFi.begin(wifiDirectSsid, wifiDirectPassword);
     SerialPrint("Connecting");
 
     while (WiFi.status() != WL_CONNECTED && maxAttemptsCount != wifiConnectTimeoutSeconds) {
