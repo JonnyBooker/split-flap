@@ -3,17 +3,17 @@ void initWiFi() {
   int wifiConnectTimeoutSeconds = 300;
 
   WiFi.mode(WIFI_STA);
-  WiFi.hostname("Split-Flap");
 
 #if WIFI_SETUP_MODE == AP
   SerialPrintln("Setting up WiFi AP Setup Mode");
 
   wifiManager.setTitle("Split-Flap Setup");
+  wifiManager.setHostname("Split-Flap");
   wifiManager.setDarkMode(true);
   wifiManager.setShowInfoUpdate(false);
   wifiManager.setConfigPortalBlocking(true);
   wifiManager.setConfigPortalTimeout(wifiConnectTimeoutSeconds);
-  wifiManager.setConnectTimeout(60);    
+  wifiManager.setConnectTimeout(120);    
   wifiManager.setWiFiAutoReconnect(true);
   wifiManager.setSaveConfigCallback([]() {
     //Sadly, if we've had to open up the WiFi manager portal to set the WiFi configuration up
