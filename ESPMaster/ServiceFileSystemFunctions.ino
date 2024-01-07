@@ -23,31 +23,6 @@ void loadValuesFromFileSystem() {
   SerialPrintln("   Countdown to Date UNIX: " + countdownToDateUnix);
 }
 
-//Gets all the currently stored calues from memory in a JSON object
-String getCurrentSettingValues() {
-  JSONVar values;
-
-  values["timezoneOffset"] = timezone.getOffset();
-  values["unitCount"] = UNITS_AMOUNT;
-  values["alignment"] = alignment;
-  values["flapSpeed"] = flapSpeed;
-  values["deviceMode"] = currentDeviceMode;
-  values["version"] = espVersion;
-  values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
-  values["lastInputMessage"] = inputText;
-  values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
-
-  for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
-    ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
-    
-    values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
-    values["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
-  }
-  
-  String jsonString = JSON.stringify(values);
-  return jsonString;
-}
-
 //Read File from LittleFS
 String readFile(fs::FS &fs, const char * path, String defaultValue) {
   SerialPrintf("Reading file: %s\r\n", path);

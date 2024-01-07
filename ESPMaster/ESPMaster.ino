@@ -23,12 +23,12 @@
   These define statements can be changed as you desire for changing the functionality and
   behaviour of your device.
 */
-#define SERIAL_ENABLE           //Uncomment for serial debug messages, no serial messages if this whole line is a comment!
-#define UNIT_CALLS_DISABLE      //Disable the call to the units so can just debug the ESP
-#define OTA_ENABLE              //Comment out to disable OTA functionality
-#define UNITS_AMOUNT 10         //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
-#define SERIAL_BAUDRATE 115200  //Serial debugging BAUD rate
-#define WIFI_SETUP_MODE AP      //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Options: AP or DIRECT
+#define SERIAL_ENABLE       true   //Option to enable serial debug messages
+#define UNIT_CALLS_DISABLE  true   //Option to disable the call to the units so can just debug the ESP with no connections
+#define OTA_ENABLE          true    //Option to enable OTA functionality
+#define UNITS_AMOUNT        10      //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
+#define SERIAL_BAUDRATE     115200  //Serial debugging BAUD rate
+#define WIFI_SETUP_MODE     AP      //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Options: AP or DIRECT
 
 /* .--------------------------------------------------------. */
 /* | ___         _               ___       __ _             | */
@@ -41,11 +41,11 @@
   These are important to maintain normal system behaviour. Only change if you know 
   what your doing.
 */
-#define ANSWER_SIZE 1           //Size of unit's request answer
-#define FLAP_AMOUNT 45          //Amount of Flaps in each unit
-#define MIN_SPEED 1             //Min Speed
-#define MAX_SPEED 12            //Max Speed
-#define WEBSERVER_H             //Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
+#define ANSWER_SIZE         1       //Size of unit's request answer
+#define FLAP_AMOUNT         45      //Amount of Flaps in each unit
+#define MIN_SPEED           1       //Min Speed
+#define MAX_SPEED           12      //Max Speed
+#define WEBSERVER_H                 //Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
 
 /* .-----------------------------------. */
 /* | _    _ _                 _        | */
@@ -73,7 +73,7 @@
 #include "LittleFS.h"
 
 //OTA Libary if we are into that kind of thing
-#ifdef OTA_ENABLE
+#if OTA_ENABLE == true
 #include <ArduinoOTA.h>
 #endif
 
@@ -87,7 +87,7 @@
 /*
   Settings you can feel free to change to customise how your display works.
 */
-//Used if connecting via "WIFI_SETUP_MODE" of "AP"
+//Used if connecting via "WIFI_SETUP_MODE" of "DIRECT" - Otherwise, leave blank
 const char* wifiDirectSsid = "";
 const char* wifiDirectPassword = "";
 
@@ -161,6 +161,7 @@ String lastReceivedMessageDateTime = "";
 long newMessageScheduledDateTimeUnix = 0;
 bool newMessageScheduleEnabled = false;
 bool isPendingReboot = false;
+bool isPendingWifiReset = false;
 bool isPendingUnitsReset = false;
 LinkedList<ScheduledMessage> scheduledMessages;
 Timezone timezone; 
@@ -170,11 +171,11 @@ AsyncWebServer webServer(80);
 
 //Used for creating a Access Point to allow WiFi setup
 WiFiManager wifiManager;
-bool wifiConfigured = false;
+bool isWifiConfigured = false;
 
 //Used to denote that the system has gone into OTA mode
-#ifdef OTA_ENABLE
-bool isInOtaMode = 0;
+#if OTA_ENABLE == true
+bool isInOtaMode = false;
 #endif
 
 /* .-----------------------------------------------. */
@@ -205,12 +206,12 @@ void setup() {
   //wifiManager.resetSettings();
   initWiFi();
 
-  if (wifiConfigured && !isPendingReboot) {
+  if (isWifiConfigured && !isPendingReboot) {
     //ezTime initialization
     waitForSync();
     timezone.setLocation(timezoneString);
 
-#ifdef OTA_ENABLE
+#if OTA_ENABLE == true
     SerialPrintln("OTA is enabled! Yay!");
 #endif
 
@@ -232,8 +233,6 @@ void setup() {
     
     webServer.on("/health", HTTP_GET, [](AsyncWebServerRequest * request) {
       SerialPrintln("Request for Health Check Received");
-      
-      String json = getCurrentSettingValues();
       request->send(200, "text/plain", "Healthy");
     });
     
@@ -253,56 +252,16 @@ void setup() {
       html += "</div>";
       
       request->send(200, "text/html", html);
-      isPendingReboot = 1;
+      isPendingReboot = true;
     });
     
     webServer.on("/reset-units", HTTP_GET, [](AsyncWebServerRequest * request) {
       SerialPrintln("Request to Reset Units Received");
       
       //This will be picked up in the loop
-      isPendingUnitsReset = 1;
+      isPendingUnitsReset = true;
       
       request->redirect("/?is-resetting-units=true");
-    });
-    
-    webServer.on("/reset-wifi", HTTP_GET, [](AsyncWebServerRequest * request) {
-      SerialPrintln("Request to Reset WiFi Received");
-      
-#if WIFI_SETUP_MODE == AP
-      SerialPrintln("WiFi mode set to AP so will reset WiFi settings");
-      IPAddress ip = WiFi.localIP();
-      
-      String html = "<div style='text-align:center'>";
-      html += "<font face='arial'><h1>Split Flap - Resetting WiFi...</h1>";
-      html += "<p>WiFi Settings have been erased. Device will now reboot...<p>";
-      html += "<p>You will now be able to connect to this device in AP mode to configure the WiFi once more<p>";
-      html += "<p>You can go to the main home page after this time by clicking the button below or going to '/'.</p>";
-      html += "<p><a href=\"http://" + ip.toString() + "\">Home</a></p>";
-      html += "</font>";
-      html += "</div>";
-      
-      request->send(200, "text/html", html);
-
-      delay(5024);
-
-      SerialPrintln("Done waiting");
-      
-      //wifiManager.resetSettings();
-      //isPendingReboot = 1;
-#else
-      SerialPrintln("WiFi mode is not AP so nothing can be done here");
-      IPAddress ip = WiFi.localIP();
-      
-      String html = "<div style='text-align:center'>";
-      html += "<font face='arial'><h1>Split Flap - Unable to Reset WiFi</h1>";
-      html += "<p>Device is not configured via AP. WiFi settings can only be updated via a Sketch upload via Arduino IDE.<p>";
-      html += "<p>You can go to the main home page after this time by clicking the button below or going to '/'.</p>";
-      html += "<p><a href=\"http://" + ip.toString() + "\">Home</a></p>";
-      html += "</font>";
-      html += "</div>";
-      
-      request->send(200, "text/html", html);
-#endif      
     });
 
     webServer.on("/scheduled-message/remove", HTTP_DELETE, [](AsyncWebServerRequest * request) {
@@ -448,7 +407,7 @@ void setup() {
       }
     });
 
-#ifdef OTA_ENABLE
+#if OTA_ENABLE == true
     webServer.on("/ota", HTTP_GET, [](AsyncWebServerRequest * request) {
       SerialPrintln("Request to start OTA mode received");
       
@@ -521,13 +480,33 @@ void setup() {
         });
         
         //Put in OTA Mode
-        isInOtaMode = 1;
+        isInOtaMode = true;
       }
       else {
         SerialPrintln("Already in OTA Mode");
       }
     });
 #endif
+
+#if WIFI_SETUP_MODE == AP
+    webServer.on("/reset-wifi", HTTP_GET, [](AsyncWebServerRequest * request) {
+      SerialPrintln("Request to Reset WiFi Received");
+      
+      IPAddress ip = WiFi.localIP();
+      
+      String html = "<div style='text-align:center'>";
+      html += "<font face='arial'><h1>Split Flap - Resetting WiFi</h1>";
+      html += "<p>WiFi Settings have been erased. Device will now reboot...<p>";
+      html += "<p>You will now be able to connect to this device in AP mode to configure the WiFi once more<p>";
+      html += "<p>You can go to the main home page after this time by clicking the button below or going to '/'.</p>";
+      html += "<p><a href=\"http://" + ip.toString() + "\">Home</a></p>";
+      html += "</font>";
+      html += "</div>";
+      
+      request->send(200, "text/html", html);
+      isPendingWifiReset = true;
+    });
+#endif   
 
     delay(250);
     webServer.begin();
@@ -560,19 +539,28 @@ void loop() {
   if (isPendingReboot) {
     SerialPrintln("Rebooting Now... Fairwell!");
     SerialPrintln("#######################################################");
-    delay(200);
+    delay(100);
     ESP.restart();
     return;
   }
 
+  //Clear off the WiFi Manager Settings
+  if (isPendingWifiReset) {
+    SerialPrintln("Removing WiFi settings");
+    wifiManager.resetSettings();
+    delay(100);
+
+    isPendingReboot = true;
+    return;
+  }
+
   //Do nothing if WiFi is not configured
-  if (!wifiConfigured) {
+  if (!isWifiConfigured) {
     //Show there is an error via text on display
     currentDeviceMode = DEVICE_MODE_TEXT;
     alignment = ALIGNMENT_MODE_CENTER;
     showText("OFFLINE");
     delay(100);
-
     return;
   }
 
@@ -606,9 +594,9 @@ void loop() {
     SerialPrintln("Done Units Reset!");
   }
   
-#ifdef OTA_ENABLE
+#if OTA_ENABLE == true
   //If System is in OTA, try handle!
-  if(isInOtaMode == 1) {
+  if(isInOtaMode) {
     ArduinoOTA.handle();
     delay(1);
   }
@@ -638,4 +626,35 @@ void loop() {
       showText(timezone.dateTime(clockFormat));
     } 
   }
+}
+
+//Gets all the currently stored calues from memory in a JSON object
+String getCurrentSettingValues() {
+  JSONVar values;
+
+  values["timezoneOffset"] = timezone.getOffset();
+  values["unitCount"] = UNITS_AMOUNT;
+  values["alignment"] = alignment;
+  values["flapSpeed"] = flapSpeed;
+  values["deviceMode"] = currentDeviceMode;
+  values["version"] = espVersion;
+  values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
+  values["lastInputMessage"] = inputText;
+  values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
+
+  for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
+    ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
+    
+    values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
+    values["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
+  }
+
+#if WIFI_SETUP_MODE == AP
+  values["wifiSettingsResettable"] = true;
+#else
+  values["wifiSettingsResettable"] = false;
+#endif
+  
+  String jsonString = JSON.stringify(values);
+  return jsonString;
 }

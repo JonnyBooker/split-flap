@@ -100,6 +100,7 @@ function loadPage() {
 		setUnitCount("10");
 		setLastReceivedMessage(new Date().toLocaleString());
 		setCountdownDate((Date.now() / 1000) + (24 * 60 * 60));
+		showHideResetWifiSettingsAction(false);
 		showScheduledMessages([
 			{
 				"scheduledDateTimeUnix": 1690134480,
@@ -125,6 +126,10 @@ function loadPage() {
 				
 				if (responseObject.scheduledMessages) {
 					showScheduledMessages(responseObject.scheduledMessages);
+				}
+
+				if (responseObject.wifiSettingsResettable) {
+					showHideResetWifiSettingsAction(responseObject.wifiSettingsResettable);
 				}
 			}
 		};
@@ -301,6 +306,13 @@ function showHideScheduledMessageInput() {
 	}
 	else {
 		dateTimeElement.classList.add("hidden")
+	}
+}
+
+function showHideResetWifiSettingsAction(isWifiApMode) {
+	if (!isWifiApMode) {
+		var linkActionResetWifi = document.getElementById("linkActionResetWifi");
+		linkActionResetWifi.classList.add("hidden");
 	}
 }
 

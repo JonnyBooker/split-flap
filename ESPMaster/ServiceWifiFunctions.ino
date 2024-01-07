@@ -38,7 +38,7 @@ void initWiFi() {
     SerialPrint("Successfully Connected to WiFi. IP Address: ");
     SerialPrintln(WiFi.localIP());
 
-    wifiConfigured = true;
+    isWifiConfigured = true;
   }
   
 #else
@@ -68,7 +68,7 @@ void initWiFi() {
       SerialPrint("Successfully Connected to WiFi. IP Address: ");
       SerialPrintln(WiFi.localIP());
 
-      wifiConfigured = true;
+      isWifiConfigured = true;
     }
   }
 
