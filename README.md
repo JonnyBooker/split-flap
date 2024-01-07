@@ -78,15 +78,14 @@ This is how my 10 units are set, 1 means switch is in the up-position:
 ### ESP01/ESP8266
 #### Pre-requistites
 To upload the sketch to the ESP8266 you need to install a few things to your arduino IDE.
-- Install the ESP8266 board to your Arduino IDE 
-	- https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/
-- Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow this tutorial: 
-	- https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/
+- Install the ESP8266 board to your Arduino IDE. Uou can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/) 
+- Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow [this tutorial](https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/) 
 - Install the following libraries via Library Manager:
-  - Arduino_JSON: https://github.com/arduino-libraries/Arduino_JSON
-  - NTPClient: https://github.com/arduino-libraries/NTPClient
-  - ezTime: https://github.com/ropg/ezTime
-  - LinkedList: https://github.com/ivanseidel/LinkedList
+  - [Arduino_JSON](https://github.com/arduino-libraries/Arduino_JSON)
+  - [NTPClient](https://github.com/arduino-libraries/NTPClient)
+  - [ezTime](https://github.com/ropg/ezTime)
+  - [LinkedList](https://github.com/ivanseidel/LinkedList)
+  - [WiFiManager](https://github.com/tzapu/WiFiManager)
 - Install the following libraries via including the included `.zip` folders in the `ArduinoLibraries` in this repository in your Arduino Libraries IDE libaries folder:
 	- ESPAsyncWebServer
     	- Downloaded From: https://github.com/me-no-dev/ESPAsyncWebServer/archive/master.zip
@@ -94,12 +93,11 @@ To upload the sketch to the ESP8266 you need to install a few things to your ard
 	- ESPAsyncTCP 
     	- Downloaded From: https://github.com/me-no-dev/ESPAsyncTCP/archive/master.zip
 
-
 To upload sketches to the ESP8266 you can either use an [Arduino Uno](https://create.arduino.cc/projecthub/pratikdesai/how-to-program-esp8266-esp-01-module-with-arduino-uno-598166) or you can buy a dedicated programmer. It is highly recommend getting a programmer as it makes uploading programs onto the ESP8266 much faster. 
 
 > Note: Be wary of ESP8266 programmers that are available which allow USB connection to your PC which may not have programming abilities. Typically extra switches are available so that the ESP8266 can be put in programming mode, although you can modify the programmer through a simple solder job to allow it to enter programming mode. Examples can be found in the customer reviews of [Amazon](https://www.amazon.co.uk/gp/product/B078J7LDLY/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1). 
 
-> Alternatively, you can get a dedicated programmer from Amazon such as [this one](https://www.amazon.co.uk/dp/B083QHJW21). This is also available on [AliExpress](https://www.aliexpress.com/item/1005001793822720.html?spm=a2g0o.detail.0.0.48622aefV0Zv89&mp=1).
+> Alternatively, you can get a dedicated programmer from Amazon such as [this one](https://www.amazon.co.uk/dp/B083QHJW21). This is also available on [AliExpress](https://www.aliexpress.com/item/1005001793822720.html?spm=a2g0o.detail.0.0.48622aefV0Zv89&mp=1) if you are willing to wait a while for it.
 
 #### Uploading the Static Assets via LittleFS
 There are static files located [here](./ESPMaster/data/) in the `data` folder of ESPMaster which will need to be uploaded. These make up the website that will be accessible on your WiFi so you can update the Split-Flap display.
