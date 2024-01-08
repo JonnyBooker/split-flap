@@ -23,8 +23,8 @@
   These define statements can be changed as you desire for changing the functionality and
   behaviour of your device.
 */
-#define SERIAL_ENABLE       true   //Option to enable serial debug messages
-#define UNIT_CALLS_DISABLE  true   //Option to disable the call to the units so can just debug the ESP with no connections
+#define SERIAL_ENABLE       false   //Option to enable serial debug messages
+#define UNIT_CALLS_DISABLE  false   //Option to disable the call to the units so can just debug the ESP with no connections
 #define OTA_ENABLE          true    //Option to enable OTA functionality
 #define UNITS_AMOUNT        10      //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
 #define SERIAL_BAUDRATE     115200  //Serial debugging BAUD rate
@@ -58,12 +58,12 @@
 */
 //Specifically put here in this order to avoid conflict
 #include <WiFiManager.h>
-#include <ESP8266WiFi.h>
+#include <ESPAsyncWebServer.h>
 
 #include <Arduino.h>
 #include <Arduino_JSON.h>
 #include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include <ESP8266WiFi.h>
 #include <ezTime.h>
 #include <LinkedList.h>
 #include <NTPClient.h>
@@ -186,19 +186,18 @@ bool isInOtaMode = false;
 /* |                                         |_|   | */
 /* '-----------------------------------------------' */
 void setup() {
-#ifdef SERIAL_ENABLE
+#if SERIAL_ENABLE == true
+  //Setup so we can see serial messages
   Serial.begin(SERIAL_BAUDRATE);
-#endif
-
-  SerialPrintln("#######################################################");
-  SerialPrintln("Master module starting...");
-
-  //De-activate I2C if debugging the ESP, otherwise serial does not work
-#ifndef SERIAL_ENABLE
+#else
   //For ESP01 only
   Wire.begin(1, 3); 
-#endif
+  
+  //De-activate I2C if debugging the ESP, otherwise serial does not work
   //Wire.begin(D1, D2); //For NodeMCU testing only SDA=D1 and SCL=D2
+#endif
+  SerialPrintln("#######################################################");
+  SerialPrintln("Master module starting...");
 
   //Load and read all the things
   initialiseFileSystem();
@@ -400,7 +399,9 @@ void setup() {
         SerialPrintln("Finished Processing Request Successfully");
 
         //Delay to give time to process the scheduled message so can be returned on "redirect"
-        delay(1024);
+        if (newMessageScheduleEnabled) {
+          delay(1024);
+        }
 
         //Redirect so that we don't have the "re-submit form" problem in browser for refresh
         request->redirect("/");
@@ -427,7 +428,7 @@ void setup() {
 
       request->send(200, "text/html", html);
   
-      if (isInOtaMode == 0) {
+      if (isInOtaMode) {
         SerialPrintln("Setting OTA Hostname");
         ArduinoOTA.setHostname("split-flap-ota");
 
@@ -540,6 +541,7 @@ void loop() {
     SerialPrintln("Rebooting Now... Fairwell!");
     SerialPrintln("#######################################################");
     delay(100);
+
     ESP.restart();
     return;
   }
@@ -617,12 +619,15 @@ void loop() {
 
     //Mode Selection
     if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
+      SerialPrintln("Showing Text or Countdown: " + inputText);
       showText(inputText);
     } 
     else if (currentDeviceMode == DEVICE_MODE_DATE) {
+      SerialPrintln("Showing Date");
       showText(timezone.dateTime(dateFormat));
     } 
     else if (currentDeviceMode == DEVICE_MODE_CLOCK) {
+      SerialPrintln("Showing Clock");
       showText(timezone.dateTime(clockFormat));
     } 
   }
@@ -640,6 +645,7 @@ String getCurrentSettingValues() {
   values["version"] = espVersion;
   values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
   values["lastInputMessage"] = inputText;
+  values["lastWrittenText"] = lastWrittenText;
   values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
 
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
@@ -648,6 +654,12 @@ String getCurrentSettingValues() {
     values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
     values["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
   }
+
+#if OTA_ENABLE == true
+  values["otaEnabled"] = true;
+#else
+  values["otaEnabled"] = false;
+#endif
 
 #if WIFI_SETUP_MODE == AP
   values["wifiSettingsResettable"] = true;

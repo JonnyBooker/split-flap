@@ -70,16 +70,14 @@ void showMessage(String message, int flapSpeed) {
 #if UNIT_CALLS_DISABLE == true
   SerialPrintln("Unit Calls are disabled for debugging. Will delay to simulate calls...");
   delay(2000);
-#endif
-
-#if UNIT_CALLS_DISABLE == true
+#else
   //Wait while display is still moving
+  SerialPrintln("Unit calls are enabled. Will display message");
   while (isDisplayMoving()) {
     SerialPrintln("Waiting for display to stop");
     delay(500);
   }
 
-  SerialPrintln(message);
   for (int i = 0; i < UNITS_AMOUNT; i++) {
     char currentLetter = message[i];
     int currentLetterPosition = translateLettertoInt(currentLetter);

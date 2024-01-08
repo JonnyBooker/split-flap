@@ -1,6 +1,6 @@
 //Initialize WiFi
 void initWiFi() {
-  int wifiConnectTimeoutSeconds = 300;
+  int wifiConnectTimeoutSeconds = 180;
 
   WiFi.mode(WIFI_STA);
 
