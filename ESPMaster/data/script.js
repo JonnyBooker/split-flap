@@ -101,6 +101,7 @@ function loadPage() {
 		setLastReceivedMessage(new Date().toLocaleString());
 		setCountdownDate((Date.now() / 1000) + (24 * 60 * 60));
 		showHideResetWifiSettingsAction(false);
+		showHideOtaUpdateAction(false);
 		showScheduledMessages([
 			{
 				"scheduledDateTimeUnix": 1690134480,
@@ -123,13 +124,11 @@ function loadPage() {
 				setUnitCount(responseObject.unitCount);
 				setCountdownDate(responseObject.countdownToDateUnix);
 				setLastReceivedMessage(responseObject.lastTimeReceivedMessageDateTime);
+				showHideResetWifiSettingsAction(responseObject.wifiSettingsResettable);
+				showHideOtaUpdateAction(responseObject.otaEnabled);
 				
 				if (responseObject.scheduledMessages) {
 					showScheduledMessages(responseObject.scheduledMessages);
-				}
-
-				if (responseObject.wifiSettingsResettable) {
-					showHideResetWifiSettingsAction(responseObject.wifiSettingsResettable);
 				}
 			}
 		};
@@ -313,6 +312,13 @@ function showHideResetWifiSettingsAction(isWifiApMode) {
 	if (!isWifiApMode) {
 		var linkActionResetWifi = document.getElementById("linkActionResetWifi");
 		linkActionResetWifi.classList.add("hidden");
+	}
+}
+
+function showHideOtaUpdateAction(isOtaEnabled) {
+	if (!isOtaEnabled) {
+		var linkActionOtaUpdate = document.getElementById("linkActionOtaUpdate");
+		linkActionOtaUpdate.classList.add("hidden");
 	}
 }
 

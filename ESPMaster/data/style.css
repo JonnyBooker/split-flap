@@ -78,7 +78,7 @@ input[type=datetime-local] {
 }
 
 .hidden {
-	display: none;
+	display: none !important;
 }
 
 .topnav {
@@ -200,6 +200,11 @@ input[type=datetime-local] {
 
 .scheduled-messages {
 	width: 100%;
+	padding-bottom: 5px;
+}
+
+.scheduled-messages .message:last-child {
+	padding-bottom: 0;
 }
 
 .message {
@@ -248,6 +253,19 @@ input[type=datetime-local] {
 .message .action .remove-button:hover {
 	background-color: #FFB96D;
 	cursor: pointer;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+	padding: 0 10px 10px 10px;
+}
+
+.actions a {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 35px;
 }
 
 @media (max-width: 700px) {
