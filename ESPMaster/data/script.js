@@ -154,13 +154,14 @@ function showBannerMessage(message, hideAfterDuration) {
 
 //Ongoing show how many characters are being used
 function updateCharacterCount() {
-	var length = document.getElementById('inputText').value.replaceAll("\\n", "").length;
+	var inputText = document.getElementById('inputText').value;
+	var length = inputText.replaceAll("\\n", "").length;
 
 	var labelCharacterCount = document.getElementById("labelCharacterCount");
 	var labelLineCount = document.getElementById("labelLineCount");
 
 	labelCharacterCount.innerHTML = length;
-	labelLineCount.innerHTML = Math.ceil(length / unitCount);
+	labelLineCount.innerHTML = Math.ceil(length / unitCount) + inputText.split("\\n").length - 1;
 }
 
 //Easy add a newline
@@ -168,6 +169,8 @@ function addNewline() {
 	var inputTextElement = document.getElementById('inputText'); 
 	var textWithNewline = inputTextElement.value + "\\n";
 	inputTextElement.value = textWithNewline;
+
+	updateCharacterCount();
 }
 
 //Send message to delete a message
@@ -284,9 +287,12 @@ function setCountdownDate(dateUnix) {
 			}
 		}
 	}
+	else {
+		//Set date fields to be a minimum of tomorrows date	
+		currentCountdownDate.value = nextDayDate.toISOString().slice(0, 10);
+	}
 
-	//Set date fields to be a minimum of tomorrows date	
-	currentCountdownDate.value = currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
+	currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
 }
 
 //Sets the last received post message to the server
