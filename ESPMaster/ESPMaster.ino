@@ -160,6 +160,7 @@ String lastWrittenText = "";
 String lastReceivedMessageDateTime = "";
 long newMessageScheduledDateTimeUnix = 0;
 bool newMessageScheduleEnabled = false;
+bool alignmentUpdated = false;
 bool isPendingReboot = false;
 bool isPendingWifiReset = false;
 bool isPendingUnitsReset = false;
@@ -310,6 +311,7 @@ void setup() {
           if (p->name() == PARAM_ALIGNMENT) {
             String receivedValue = p->value();
             if (receivedValue == ALIGNMENT_MODE_LEFT || receivedValue == ALIGNMENT_MODE_CENTER || receivedValue == ALIGNMENT_MODE_RIGHT) {
+              alignmentUpdated = alignment != receivedValue;
               alignment = receivedValue;
     
               writeFile(LittleFS, alignmentPath, alignment.c_str());
@@ -428,9 +430,9 @@ void setup() {
 
       request->send(200, "text/html", html);
   
-      if (isInOtaMode) {
+      if (!isInOtaMode) {
         SerialPrintln("Setting OTA Hostname");
-        ArduinoOTA.setHostname("split-flap-ota");
+        ArduinoOTA.setHostname("Split-Flap-OTA");
 
         //If there is a password set, disabled by default for ease
         if (otaPassword != "") {
@@ -619,15 +621,12 @@ void loop() {
 
     //Mode Selection
     if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
-      SerialPrintln("Showing Text or Countdown: " + inputText);
       showText(inputText);
     } 
     else if (currentDeviceMode == DEVICE_MODE_DATE) {
-      SerialPrintln("Showing Date");
       showText(timezone.dateTime(dateFormat));
     } 
     else if (currentDeviceMode == DEVICE_MODE_CLOCK) {
-      SerialPrintln("Showing Clock");
       showText(timezone.dateTime(clockFormat));
     } 
   }
@@ -657,6 +656,7 @@ String getCurrentSettingValues() {
 
 #if OTA_ENABLE == true
   values["otaEnabled"] = true;
+  values["isInOtaMode"] = isInOtaMode;
 #else
   values["otaEnabled"] = false;
 #endif

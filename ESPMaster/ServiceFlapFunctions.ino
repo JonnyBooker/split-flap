@@ -1,12 +1,13 @@
 //Shows a new message on the display
 void showText(String message) {  
-  if (lastWrittenText != message) { 
+  if (lastWrittenText != message || alignmentUpdated) { 
     String lastWrittenTextDisplay = lastWrittenText == "" ? "<Blank>" : lastWrittenText;
     String messageDisplay = message == "" ? "<Blank>" : message;
 
     SerialPrintln("Showing new Message");
     SerialPrintln("Last Written Text: " + lastWrittenTextDisplay);
     SerialPrintln("New Message: " + messageDisplay);
+    SerialPrintln("Alignment Updated: " + alignmentUpdated);
   
     LinkedList<String> messageLines = processSentenceToLines(message);
 
@@ -43,6 +44,9 @@ void showText(String message) {
 
     //Save what we last did
     lastWrittenText = message;
+
+    //Alignment definitely has not changed now
+    alignmentUpdated = false;
     
     SerialPrintln("Done showing message");
   }
