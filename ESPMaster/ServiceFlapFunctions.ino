@@ -3,11 +3,11 @@ void showText(String message) {
   if (lastWrittenText != message || alignmentUpdated) { 
     String lastWrittenTextDisplay = lastWrittenText == "" ? "<Blank>" : lastWrittenText;
     String messageDisplay = message == "" ? "<Blank>" : message;
+    String alignmentUpdatedDisplay = alignmentUpdated ? "Yes" : "No";
 
     SerialPrintln("Showing new Message");
-    SerialPrintln("Last Written Text: " + lastWrittenTextDisplay);
     SerialPrintln("New Message: " + messageDisplay);
-    SerialPrintln("Alignment Updated: " + alignmentUpdated);
+    SerialPrintln("Alignment Updated: " + alignmentUpdatedDisplay);
   
     LinkedList<String> messageLines = processSentenceToLines(message);
 
@@ -30,16 +30,19 @@ void showText(String message) {
       }  
     }
     else {
-      SerialPrint("Showing a simple message: ");
-      SerialPrintln(message);
-  
+      SerialPrintln("Showing a simple message: " + message);
+      
       showMessage(message, convertSpeed(flapSpeed));
     }  
 
     //If the device wasn't previously in text mode, delay for a short time so can read!
     if (currentDeviceMode != previousDeviceMode) {
-      delay(5000);
+      SerialPrintln("Reverting device mode to original mode. Original Mode: " + previousDeviceMode);
+      delay(7500);
       currentDeviceMode = previousDeviceMode;
+    }
+    else {
+      SerialPrintln("No device mode revert required");
     }
 
     //Save what we last did
@@ -54,10 +57,6 @@ void showText(String message) {
 
 //Pushes message to units
 void showMessage(String message, int flapSpeed) {
-  SerialPrint("-- Show Message Received for: \"");
-  SerialPrint(message);
-  SerialPrintln("\"");
-
   //Format string per alignment choice
   if (alignment == ALIGNMENT_MODE_LEFT) {
     message = leftString(message);
@@ -67,7 +66,7 @@ void showMessage(String message, int flapSpeed) {
     message = centerString(message);
   }
 
-  SerialPrint("-- Aligned Message: \"");
+  SerialPrint("Showing Aligned Message: \"");
   SerialPrint(message);
   SerialPrintln("\"");
 

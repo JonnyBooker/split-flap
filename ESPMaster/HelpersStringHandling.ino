@@ -192,3 +192,14 @@ LinkedList<String> processSentenceToLines(String sentence) {
 
   return lines;
 }
+
+//Used for ensuring a string is a number
+bool isNumber(String str) {
+  char* endPtr;
+
+  //10 specifies base 10 (decimal)
+  strtol(str.c_str(), &endPtr, 10);  
+
+  //Check if the conversion reached the end of the string
+  return (*endPtr == '\0');
+}

@@ -297,26 +297,23 @@ void setup() {
     });
 
     webServer.on("/", HTTP_POST, [](AsyncWebServerRequest * request) {
-      bool submissionError = false;
-
       SerialPrintln("Request Post of Form Received");    
-      lastReceivedMessageDateTime = timezone.dateTime("d M y H:i:s");
+
+      bool submissionError = false;
+      
+      bool newMessageScheduleEnabledValue;
+      long newMessageScheduleDateTimeUnixValue;
+      String newAlignmentValue, newDeviceModeValue, newFlapSpeedValue, newInputTextValue, newCountdownToDateUnixValue;
       
       int params = request->params();
       for (int i = 0; i < params; i++) {
         AsyncWebParameter* p = request->getParam(i);
         if (p->isPost()) {
-
           //HTTP POST alignment value
           if (p->name() == PARAM_ALIGNMENT) {
             String receivedValue = p->value();
             if (receivedValue == ALIGNMENT_MODE_LEFT || receivedValue == ALIGNMENT_MODE_CENTER || receivedValue == ALIGNMENT_MODE_RIGHT) {
-              alignmentUpdated = alignment != receivedValue;
-              alignment = receivedValue;
-    
-              writeFile(LittleFS, alignmentPath, alignment.c_str());
-              
-              SerialPrintln("Alignment set to: " + alignment);
+              newAlignmentValue = receivedValue;
             }
             else {
               SerialPrintln("Alignment provided was not valid. Value: " + receivedValue); 
@@ -328,12 +325,7 @@ void setup() {
           if (p->name() == PARAM_DEVICEMODE) {
             String receivedValue = p->value();
             if (receivedValue == DEVICE_MODE_TEXT || receivedValue == DEVICE_MODE_CLOCK || receivedValue == DEVICE_MODE_DATE || receivedValue == DEVICE_MODE_COUNTDOWN) {
-              //This is a defacto mode from the user being set so they should be the same
-              currentDeviceMode = previousDeviceMode = receivedValue;
-          
-              writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
-              
-              SerialPrintln("Device Mode set to: " + receivedValue);
+              newDeviceModeValue = receivedValue;          
             }
             else {
               SerialPrintln("Device Mode provided was not valid. Invalid Value: " + receivedValue); 
@@ -343,51 +335,44 @@ void setup() {
 
           //HTTP POST Flap Speed Slider value
           if (p->name() == PARAM_FLAP_SPEED) {
-            flapSpeed = p->value().c_str();
-
-            writeFile(LittleFS, flapSpeedPath, flapSpeed.c_str());
-
-            SerialPrintln("Flap Speed set to: " + flapSpeed);
+            newFlapSpeedValue = p->value().c_str();
           }
 
           //HTTP POST inputText value
           if (p->name() == PARAM_INPUT_TEXT) {
-            inputText = p->value().c_str();
-            
-            if (inputText != "") {
-              SerialPrintln("Input Text set to: " + inputText);
-            }
-            else {
-              SerialPrintln("Input Text set to: <Blank>");
-            }
+            newInputTextValue = p->value().c_str();
           }
 
           //HTTP POST Schedule Enabled
           if (p->name() == PARAM_SCHEDULE_ENABLED) {
             String newMessageScheduleEnabledString = p->value().c_str();
-            newMessageScheduleEnabled = newMessageScheduleEnabledString == "on" ?
+            newMessageScheduleEnabledValue = newMessageScheduleEnabledString == "on" ?
               true : 
               false;
-              
-            SerialPrintln("Schedule Enable set to: " + newMessageScheduleEnabled);
           }
 
           //HTTP POST Schedule Seconds
           if (p->name() == PARAM_SCHEDULE_DATE_TIME) {
-            String scheduledDateTimeUnix = p->value().c_str();
-            newMessageScheduledDateTimeUnix = atol(scheduledDateTimeUnix.c_str());
-
-            SerialPrintln("Schedule Date Time set to: " + scheduledDateTimeUnix);
+            String receivedValue = p->value().c_str();
+            if (isNumber(receivedValue)) {
+              newMessageScheduleDateTimeUnixValue = atol(receivedValue.c_str());
+            }
+            else {
+              SerialPrintln("Schedule date time provided was not valid. Invalid Value: " + receivedValue); 
+              submissionError = true;
+            }
           }
 
           //HTTP POST Countdown Seconds
           if (p->name() == PARAM_COUNTDOWN_DATE) {
-            String countdownUnix = p->value().c_str();
-            countdownToDateUnix = atol(countdownUnix.c_str());
-
-            writeFile(LittleFS, countdownPath, countdownUnix.c_str());
-
-            SerialPrintln("Countdown Date set to: " + countdownToDateUnix);
+            String receivedValue = p->value().c_str();
+            if (isNumber(receivedValue)) {
+              newCountdownToDateUnixValue = atol(receivedValue.c_str());
+            }
+            else {
+              SerialPrintln("Countdown date provided was not valid. Invalid Value: " + receivedValue); 
+              submissionError = true;
+            }
           }
         }
       }    
@@ -400,10 +385,54 @@ void setup() {
       else {
         SerialPrintln("Finished Processing Request Successfully");
 
-        //Delay to give time to process the scheduled message so can be returned on "redirect"
-        if (newMessageScheduleEnabled) {
+        lastReceivedMessageDateTime = timezone.dateTime("d M y H:i:s");
+
+        //Only if a new alignment value
+        if (alignment != newAlignmentValue) {
+          alignment = newAlignmentValue;
+          alignmentUpdated = true;
+
+          writeFile(LittleFS, alignmentPath, alignment.c_str());
+          SerialPrintln("Alignment Updated: " + alignment);
+        }
+
+        //Only if a new flap speed value
+        if (flapSpeed != newFlapSpeedValue) {
+          flapSpeed = newFlapSpeedValue;
+
+          writeFile(LittleFS, flapSpeedPath, flapSpeed.c_str());
+          SerialPrintln("Flap Speed Updated: " + flapSpeed);
+        }
+
+        //Only if countdown date has changed
+        if (countdownToDateUnix != newCountdownToDateUnixValue) {
+            countdownToDateUnix = newCountdownToDateUnixValue;
+
+            writeFile(LittleFS, countdownPath, countdownToDateUnix.c_str());
+            SerialPrintln("Countdown Date Time Unix Updated: " + countdownToDateUnix);
+        }
+
+        //If the message sent through is to be scheduled, then we don't change the current device mode
+        //Otherwise, we set the 
+        if (!newMessageScheduleEnabledValue) {
+          //Only if device mode has changed
+          if (currentDeviceMode != newDeviceModeValue) {
+            previousDeviceMode = currentDeviceMode = newDeviceModeValue;
+
+            writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
+            SerialPrintln("Device Mode Set: " + currentDeviceMode);
+          }
+        }
+        else {
+          newMessageScheduleEnabled = true;
+
+          SerialPrintln("Scheduled Message Enabled. Will pause momentarily");
           delay(1024);
         }
+
+        //Other things that need setting
+        inputText = newInputTextValue;
+        newMessageScheduledDateTimeUnix = newMessageScheduleDateTimeUnixValue;
 
         //Redirect so that we don't have the "re-submit form" problem in browser for refresh
         request->redirect("/");
