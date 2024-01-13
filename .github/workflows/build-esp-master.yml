@@ -12,6 +12,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Unzip Arduino Libraries
+        run: |
+          unzip ./ESPAsyncTCP-master.zip
+          unzip ./ESPAsyncWebServer-master.zip
+
       - name: Compile sketch
         uses: arduino/compile-sketches@v1
         with:
@@ -33,7 +38,7 @@ jobs:
             - name: LinkedList
               version: 1.3.3
             - name: ESPAsyncWebServer
-              source-path: ./ArduinoLibraries/ESPAsyncWebServer-master.zip
+              source-path: ./ArduinoLibraries/ESPAsyncWebServer-master
             - name: ESPAsyncTCP
-              source-path: ./ArduinoLibraries/ESPAsyncTCP-master.zip
+              source-path: ./ArduinoLibraries/ESPAsyncTCP-master
           enable-deltas-report: true
