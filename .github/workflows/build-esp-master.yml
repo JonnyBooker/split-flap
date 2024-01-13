@@ -15,6 +15,7 @@ jobs:
       - name: Compile sketch
         uses: arduino/compile-sketches@v1
         with:
+          fqbn: "esp8266:esp8266:generic"
           platforms: |
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
