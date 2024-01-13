@@ -9,13 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Unzip Arduino Libraries
         run: |
-          unzip ./ArduinoLibraries/ESPAsyncTCP-master.zip
-          unzip ./ArduinoLibraries/ESPAsyncWebServer-master.zip
+          mkdir ~/Arduino
+          mkdir ~/Arduino/libraries
+          unzip ./ArduinoLibraries/ESPAsyncTCP-master.zip -d ~/Arduino/libraries/
+          unzip ./ArduinoLibraries/ESPAsyncWebServer-master.zip -d ~/Arduino/libraries/
 
       - name: Compile sketch
         uses: arduino/compile-sketches@v1
@@ -37,8 +39,6 @@ jobs:
               version: 0.8.3
             - name: LinkedList
               version: 1.3.3
-            - name: ESPAsyncWebServer
-              source-path: ./ArduinoLibraries/ESPAsyncWebServer-master
-            - name: ESPAsyncTCP
-              source-path: ./ArduinoLibraries/ESPAsyncTCP-master
-          enable-deltas-report: true
+          cli-compile-flags: |
+            - --warnings
+            - "none"
