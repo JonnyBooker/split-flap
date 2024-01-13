@@ -14,7 +14,6 @@ void loadValuesFromFileSystem() {
   alignment = readFile(LittleFS, alignmentPath, ALIGNMENT_MODE_LEFT);
   flapSpeed = readFile(LittleFS, flapSpeedPath, "80");
   currentDeviceMode = readFile(LittleFS, deviceModePath, DEVICE_MODE_TEXT);
-  previousDeviceMode = currentDeviceMode;
 
   SerialPrintln("Loaded Settings:");
   SerialPrintln("   Alignment: " + alignment);

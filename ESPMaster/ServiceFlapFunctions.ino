@@ -1,7 +1,10 @@
 //Shows a new message on the display
 void showText(String message) {  
+  showText(message, 0);
+}
+
+void showText(String message, int delayMillis) {  
   if (lastWrittenText != message || alignmentUpdated) { 
-    String lastWrittenTextDisplay = lastWrittenText == "" ? "<Blank>" : lastWrittenText;
     String messageDisplay = message == "" ? "<Blank>" : message;
     String alignmentUpdatedDisplay = alignmentUpdated ? "Yes" : "No";
 
@@ -36,13 +39,9 @@ void showText(String message) {
     }  
 
     //If the device wasn't previously in text mode, delay for a short time so can read!
-    if (currentDeviceMode != previousDeviceMode) {
-      SerialPrintln("Reverting device mode to original mode. Original Mode: " + previousDeviceMode);
-      delay(7500);
-      currentDeviceMode = previousDeviceMode;
-    }
-    else {
-      SerialPrintln("No device mode revert required");
+    if (delayMillis != 0) {
+      SerialPrintln("Pausing for a small duration. Delay: " + String(delayMillis));
+      delay(delayMillis);
     }
 
     //Save what we last did

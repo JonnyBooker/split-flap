@@ -56,13 +56,22 @@
 /*
   External library dependencies, not much more to say!
 */
-//Specifically put here in this order to avoid conflict
+
+//WiFi Setup Library if we use that mode
+//Specifically put here in this order to avoid conflict with other libraries
+#if WIFI_SETUP_MODE == AP
 #include <WiFiManager.h>
-#include <ESPAsyncWebServer.h>
+#endif
+
+//OTA Libary if we are into that kind of thing
+#if OTA_ENABLE == true
+#include <ArduinoOTA.h>
+#endif
 
 #include <Arduino.h>
 #include <Arduino_JSON.h>
 #include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <ESP8266WiFi.h>
 #include <ezTime.h>
 #include <LinkedList.h>
@@ -71,12 +80,6 @@
 #include <Wire.h>
 #include "Classes.h"
 #include "LittleFS.h"
-
-//OTA Libary if we are into that kind of thing
-#if OTA_ENABLE == true
-#include <ArduinoOTA.h>
-#endif
-
 /* .------------------------------------------------------------------------------------. */
 /* |  ___           __ _                    _    _       ___     _   _   _              | */
 /* | / __|___ _ _  / _(_)__ _ _  _ _ _ __ _| |__| |___  / __|___| |_| |_(_)_ _  __ _ ___| */
@@ -153,13 +156,10 @@ const char* countdownPath = "/countdown.txt";
 String alignment = "";
 String flapSpeed = "";
 String inputText = "";
-String previousDeviceMode = "";
 String currentDeviceMode = "";
 String countdownToDateUnix = "";
 String lastWrittenText = "";
 String lastReceivedMessageDateTime = "";
-long newMessageScheduledDateTimeUnix = 0;
-bool newMessageScheduleEnabled = false;
 bool alignmentUpdated = false;
 bool isPendingReboot = false;
 bool isPendingWifiReset = false;
@@ -171,8 +171,10 @@ Timezone timezone;
 AsyncWebServer webServer(80);
 
 //Used for creating a Access Point to allow WiFi setup
+#if WIFI_SETUP_MODE == AP
 WiFiManager wifiManager;
 bool isWifiConfigured = false;
+#endif
 
 //Used to denote that the system has gone into OTA mode
 #if OTA_ENABLE == true
@@ -203,8 +205,10 @@ void setup() {
   //Load and read all the things
   initialiseFileSystem();
   loadValuesFromFileSystem();
-  //wifiManager.resetSettings();
   initWiFi();
+  
+  //Helpful if want to force reset WiFi settings for testing
+  //wifiManager.resetSettings();
 
   if (isWifiConfigured && !isPendingReboot) {
     //ezTime initialization
@@ -271,23 +275,20 @@ void setup() {
         bool removedScheduledMessage = false;
         String idValue = request->getParam(PARAM_ID)->value();
 
-        //Find the existing scheduled message and delete it
-        for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
-          ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
-      
-          if (idValue.toInt() == scheduledMessage.ScheduledDateTimeUnix) {
-            SerialPrintln("Deleting Scheduled Message due to be shown: " + scheduledMessage.Message);
-            scheduledMessages.remove(scheduledMessageIndex);
-            
-            removedScheduledMessage = true;
-            request->send(201, "text/plain", "Created");
-            break;
+        if (isNumber(idValue)) {
+          long parsedIdValue = atol(idValue.c_str());
+          bool removed = removeScheduledMessage(parsedIdValue);
+          
+          if (removed) {
+            request->send(202, "text/plain", "Removed");
+          }
+          else {
+            request->send(400, "text/plain", "Unable to find message with ID specified. Id: " + idValue);
           }
         }
-
-        if (!removedScheduledMessage) {
-          SerialPrintln("Unable to find Scheduled Message to value. Id: " + idValue);
-          request->send(400, "text/plain", "Unable to find message with ID specified. Id: " + idValue);
+        else {
+          SerialPrintln("Invalid Delete Scheduled Message ID Received");
+          request->send(400, "text/plain", "Invalid ID value");
         }
       } 
       else {
@@ -367,7 +368,7 @@ void setup() {
           if (p->name() == PARAM_COUNTDOWN_DATE) {
             String receivedValue = p->value().c_str();
             if (isNumber(receivedValue)) {
-              newCountdownToDateUnixValue = atol(receivedValue.c_str());
+              newCountdownToDateUnixValue = receivedValue;
             }
             else {
               SerialPrintln("Countdown date provided was not valid. Invalid Value: " + receivedValue); 
@@ -406,33 +407,28 @@ void setup() {
 
         //Only if countdown date has changed
         if (countdownToDateUnix != newCountdownToDateUnixValue) {
-            countdownToDateUnix = newCountdownToDateUnixValue;
+          countdownToDateUnix = newCountdownToDateUnixValue;
 
-            writeFile(LittleFS, countdownPath, countdownToDateUnix.c_str());
-            SerialPrintln("Countdown Date Time Unix Updated: " + countdownToDateUnix);
+          writeFile(LittleFS, countdownPath, countdownToDateUnix.c_str());
+          SerialPrintln("Countdown Date Time Unix Updated: " + countdownToDateUnix);
         }
 
-        //If the message sent through is to be scheduled, then we don't change the current device mode
-        //Otherwise, we set the 
-        if (!newMessageScheduleEnabledValue) {
+        //If its a new scheduled message, add it to the backlog and proceed, don't want to change device mode
+        //Else, we do want to change the device mode and clear out the input text
+        if (newMessageScheduleEnabledValue) {
+          addScheduledMessage(newInputTextValue, newMessageScheduleDateTimeUnixValue);
+          SerialPrintln("New Scheduled Message added");
+        }
+        else {
           //Only if device mode has changed
           if (currentDeviceMode != newDeviceModeValue) {
-            previousDeviceMode = currentDeviceMode = newDeviceModeValue;
+            currentDeviceMode = newDeviceModeValue;
+            inputText = newInputTextValue;
 
             writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
             SerialPrintln("Device Mode Set: " + currentDeviceMode);
           }
         }
-        else {
-          newMessageScheduleEnabled = true;
-
-          SerialPrintln("Scheduled Message Enabled. Will pause momentarily");
-          delay(1024);
-        }
-
-        //Other things that need setting
-        inputText = newInputTextValue;
-        newMessageScheduledDateTimeUnix = newMessageScheduleDateTimeUnixValue;
 
         //Redirect so that we don't have the "re-submit form" problem in browser for refresh
         request->redirect("/");
@@ -600,10 +596,6 @@ void loop() {
   if (isPendingUnitsReset) {
     SerialPrintln("Reseting Units now...");
 
-    //Set the device mode to "Text" so can do a reset
-    previousDeviceMode = currentDeviceMode;
-    currentDeviceMode = DEVICE_MODE_TEXT;
-
     //Blank out the message
     String blankOutText1 = createRepeatingString('-');
     showText(blankOutText1);
@@ -612,9 +604,6 @@ void loop() {
     //Do just enough to do a full iteration which triggers the re-calibration
     String blankOutText2 = createRepeatingString('.');
     showText(blankOutText2);
-
-    //Put back to the mode we was just in
-    currentDeviceMode = previousDeviceMode;
 
     //Try re-display the last message now we've reset if we was in text mode
     if (currentDeviceMode == DEVICE_MODE_TEXT) {
@@ -672,7 +661,6 @@ String getCurrentSettingValues() {
   values["deviceMode"] = currentDeviceMode;
   values["version"] = espVersion;
   values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
-  values["lastInputMessage"] = inputText;
   values["lastWrittenText"] = lastWrittenText;
   values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
 
