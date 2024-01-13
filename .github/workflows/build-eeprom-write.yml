@@ -1,0 +1,24 @@
+name: 'Build EEPROM Write Sketch'
+
+on:
+  - push
+
+jobs:
+  compile-eeprom-write-sketch:
+    name: "Build EEPROM Write Sketch"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Compile sketch
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: "arduino:avr:nano"
+          sketch-paths: |
+            - ./EEPROM_Write_Offset
+          libraries: '[]'
+          cli-compile-flags: |
+            - --warnings
+            - "none"

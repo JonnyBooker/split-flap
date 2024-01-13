@@ -1,0 +1,26 @@
+name: 'Build Arduino Unit Sketch'
+
+on:
+  - push
+
+jobs:
+  compile-unit-sketch:
+    name: "Build Arduino Unit Sketch"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Compile sketch
+        uses: arduino/compile-sketches@v1
+        with:
+          fqbn: "arduino:avr:nano"
+          sketch-paths: |
+            - ./Unit
+          libraries: |
+            - name: Stepper
+              version: 1.1.3
+          cli-compile-flags: |
+            - --warnings
+            - "none"

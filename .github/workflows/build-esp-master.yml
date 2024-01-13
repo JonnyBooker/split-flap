@@ -4,7 +4,7 @@ on:
   - push
 
 jobs:
-  compile-sketch:
+  compile-esp-sketch:
     name: "Build ESP Master Sketch"
     runs-on: ubuntu-latest
 
