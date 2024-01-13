@@ -7,11 +7,6 @@ jobs:
   compile-sketch:
     name: "Build ESP Master Sketch"
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        fqbn:
-          - "esp8266:esp8266:nodemcu"
-          - "esp8266:esp8266:d1_mini"
 
     steps:
       - name: Checkout repository
@@ -20,7 +15,6 @@ jobs:
       - name: Compile sketch
         uses: arduino/compile-sketches@v1
         with:
-          fqbn: ${{ matrix.fqbn }}
           platforms: |
             - name: esp8266:esp8266
               source-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
@@ -37,4 +31,8 @@ jobs:
               version: 0.8.3
             - name: LinkedList
               version: 1.3.3
+            - name: ESPAsyncWebServer
+              source-path: ./ArduinoLibraries/ESPAsyncWebServer-master.zip
+            - name: ESPAsyncTCP
+              source-path: ./ArduinoLibraries/ESPAsyncTCP-master.zip
           enable-deltas-report: true
