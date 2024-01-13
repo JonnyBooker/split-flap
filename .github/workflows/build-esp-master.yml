@@ -14,8 +14,8 @@ jobs:
 
       - name: Unzip Arduino Libraries
         run: |
-          unzip ./ESPAsyncTCP-master.zip
-          unzip ./ESPAsyncWebServer-master.zip
+          unzip ./ArduinoLibraries/ESPAsyncTCP-master.zip
+          unzip ./ArduinoLibraries/ESPAsyncWebServer-master.zip
 
       - name: Compile sketch
         uses: arduino/compile-sketches@v1
