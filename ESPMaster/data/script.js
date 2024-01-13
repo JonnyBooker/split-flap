@@ -108,10 +108,14 @@ function loadPage() {
 				"message": "Test Message 1"
 			},
 		]);
+
+		setTimeout(function() {
+			showContent();
+		}, 1000);
 	}
 	else {
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function () {
+		var xhrRequest = new XMLHttpRequest();
+		xhrRequest.onreadystatechange = function () {
 			if (this.readyState == 4 && this.status == 200) {
 				var responseObject = JSON.parse(this.responseText);
 				
@@ -130,11 +134,13 @@ function loadPage() {
 				if (responseObject.scheduledMessages) {
 					showScheduledMessages(responseObject.scheduledMessages);
 				}
+
+				showContent();
 			}
 		};
 
-		xhr.open("GET", "/settings", true);
-		xhr.send();
+		xhrRequest.open("GET", "/settings", true);
+		xhrRequest.send();
 	}
 }
 
@@ -183,7 +189,7 @@ function deleteScheduledMessage(id, message) {
 	var xhr = new XMLHttpRequest();
 	xhr.onreadystatechange = function () {
 		//Reload the page
-		if (this.readyState == 4 && this.status == 201) {
+		if (this.readyState == 4 && this.status == 202) {
 			window.location.reload();
 		}
 	};
@@ -351,7 +357,7 @@ function showScheduledMessages(scheduledMessages) {
 		//Create a element to show the text
 		var textElement = document.createElement("div");
 		textElement.className = "text";
-		textElement.innerText = scheduledMessage.message;
+		textElement.innerText = scheduledMessage.message.trim() == "" ? "<Blank>" : scheduledMessage.message;
 
 		//Create a remove button
 		var actionElement = document.createElement("div");
@@ -371,4 +377,12 @@ function showScheduledMessages(scheduledMessages) {
 		var container = document.getElementById("containerScheduledMessages");
 		container.appendChild(messageElement);
 	}
+}
+
+function showContent() {
+	var elementInitialLoading = document.getElementById("initialLoading");
+	var elementContent = document.getElementById("loadedContent");
+
+	elementInitialLoading.classList.add("hidden");
+	elementContent.classList.remove("hidden");
 }
