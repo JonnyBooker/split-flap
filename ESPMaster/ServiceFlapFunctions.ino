@@ -80,20 +80,20 @@ void showMessage(String message, int flapSpeed) {
     delay(500);
   }
 
-  for (int i = 0; i < UNITS_AMOUNT; i++) {
-    char currentLetter = message[i];
+  for (int unitIndex = 0; unitIndex < UNITS_AMOUNT; unitIndex++) {
+    char currentLetter = message[unitIndex];
     int currentLetterPosition = translateLettertoInt(currentLetter);
     
     SerialPrint("Unit Nr.: ");
-    SerialPrint(i);
+    SerialPrint(unitIndex);
     SerialPrint(" Letter: ");
-    SerialPrint(message[i]);
+    SerialPrint(message[unitIndex]);
     SerialPrint(" Letter position: ");
     SerialPrintln(currentLetterPosition);
 
     //only write to unit if char exists in letter array
     if (currentLetterPosition != -1) {
-      writeToUnit(i, currentLetterPosition, flapSpeed);
+      writeToUnit(unitIndex, currentLetterPosition, flapSpeed);
     }
   }
 
@@ -107,11 +107,12 @@ void showMessage(String message, int flapSpeed) {
 
 //Translates char to letter position
 int translateLettertoInt(char letterchar) {
-  for (int i = 0; i < FLAP_AMOUNT; i++) {
-    if (letterchar == letters[i]) {
-      return i;
+  for (int flapIndex = 0; flapIndex < FLAP_AMOUNT; flapIndex++) {
+    if (letterchar == letters[flapIndex]) {
+      return flapIndex;
     }
   }
+
   return -1;
 }
 
@@ -122,11 +123,11 @@ void writeToUnit(int address, int letter, int flapSpeed) {
   Wire.beginTransmission(address);
 
   //Write values to send to slave in buffer
-  for (unsigned int i = 0; i < sizeof sendArray / sizeof sendArray[0]; i++) {
+  for (unsigned int index = 0; index < sizeof sendArray / sizeof sendArray[0]; index++) {
     SerialPrint("sendArray: ");
-    SerialPrintln(sendArray[i]);
+    SerialPrintln(sendArray[index]);
 
-    Wire.write(sendArray[i]);
+    Wire.write(sendArray[index]);
   }
   Wire.endTransmission(); //send values to unit
 }
@@ -134,14 +135,14 @@ void writeToUnit(int address, int letter, int flapSpeed) {
 //Checks if unit in display is currently moving
 bool isDisplayMoving() {
   //Request all units moving state and write to array
-  for (int i = 0; i < UNITS_AMOUNT; i++) {
-    displayState[i] = checkIfMoving(i);
-    if (displayState[i] == 1) {
+  for (int unitIndex = 0; unitIndex < UNITS_AMOUNT; unitIndex++) {
+    displayState[unitIndex] = checkIfMoving(unitIndex);
+    if (displayState[unitIndex] == 1) {
       SerialPrintln("A unit in the display is busy");
       return true;
     } 
     //If unit is not available through i2c
-    else if (displayState[i] == -1) {
+    else if (displayState[unitIndex] == -1) {
       SerialPrintln("A unit in the display is sleeping");
       return true;
     }

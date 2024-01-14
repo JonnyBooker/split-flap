@@ -307,8 +307,8 @@ void setup() {
       String newAlignmentValue, newDeviceModeValue, newFlapSpeedValue, newInputTextValue, newCountdownToDateUnixValue;
       
       int params = request->params();
-      for (int i = 0; i < params; i++) {
-        AsyncWebParameter* p = request->getParam(i);
+      for (int paramIndex = 0; paramIndex < params; paramIndex++) {
+        AsyncWebParameter* p = request->getParam(paramIndex);
         if (p->isPost()) {
           //HTTP POST alignment value
           if (p->name() == PARAM_ALIGNMENT) {
@@ -606,12 +606,10 @@ void loop() {
     showText(blankOutText2);
 
     //Try re-display the last message now we've reset if we was in text mode
-    if (currentDeviceMode == DEVICE_MODE_TEXT) {
-      showText(lastWrittenText);
-    }
+    showText(lastWrittenText);
 
     //We did a reset!
-    isPendingUnitsReset = 0;
+    isPendingUnitsReset = false;
 
     SerialPrintln("Done Units Reset!");
   }

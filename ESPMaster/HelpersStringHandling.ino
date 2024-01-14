@@ -2,12 +2,12 @@
 String centerString(String message) {
   //Takes care of the left side
   int leftSpaceAmount = (UNITS_AMOUNT -  message.length()) / 2;
-  for (int i = 0; i < leftSpaceAmount; i++) {
+  for (int spaceIndex = 0; spaceIndex < leftSpaceAmount; spaceIndex++) {
     message = " " + message;
   }
 
   //Take care of the right side
-  for(int i = message.length(); i < UNITS_AMOUNT; i++) {
+  for(int spaceIndex = message.length(); spaceIndex < UNITS_AMOUNT; spaceIndex++) {
     message = message + " ";
   }
 
@@ -18,7 +18,7 @@ String centerString(String message) {
 
 String createRepeatingString(char character) {
   String newMessage = "";
-  for (int i = 0; i < UNITS_AMOUNT; i++) {
+  for (int unitIndex = 0; unitIndex < UNITS_AMOUNT; unitIndex++) {
     newMessage.concat(character);
   }
 
@@ -28,7 +28,7 @@ String createRepeatingString(char character) {
 //Aligns string on right side of array and fills empty chars with spaces
 String rightString(String message) {
   int rightSpaceAmount = (UNITS_AMOUNT - message.length());
-  for (int i = 0; i < rightSpaceAmount; i++) {
+  for (int spaceIndex = 0; spaceIndex < rightSpaceAmount; spaceIndex++) {
     message = " " + message;
   }
 
@@ -40,7 +40,7 @@ String rightString(String message) {
 //Aligns string on left side of array and fills empty chars with spaces
 String leftString(String message) {
   int leftSpaceAmount = (UNITS_AMOUNT - message.length());
-  for (int i = 0; i < leftSpaceAmount; i++) {
+  for (int spaceIndex = 0; spaceIndex < leftSpaceAmount; spaceIndex++) {
     message = message + " ";
   }
 
