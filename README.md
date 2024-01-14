@@ -16,14 +16,16 @@ This project has built on the original project to add extra features such as:
   - If the device was to lose connection, it should retry and if all else fails, it will open up the web portal again to change the WiFi settings if necessary
 - Reworked UI
   - Can see messages scheduled to be displayed and option to remove them
+  - Loading indicators
+  - Show hide information to fill out for the mode you select
   - See extra information on the UI such as:
     - Last Message Received
     - Number of Flaps registered
     - Version Number running
-    - How many characters are in the textbox for text
+    - How many characters/lines are in the textbox for text
     - Add newline button (as typing `\n` is a pain on a mobile keyboard)
 - Message Scheduling
-  - Ability to send a message and display it at a later date. If the clock was in another mode such as `Clock` mode, it will show the message for a duration, then return to that mode.
+  - Ability to send a message and display it at a later date. If the clock was in another mode such as `Clock` mode, it will show the message for a duration, then return to that mode
 - Arduino OTA
   - Over the Air updates to the display
 - Updated `README.md` to add scenarios of problems encountered
@@ -37,7 +39,7 @@ Also the code has been refactored to try facilitate easier development:
 3D-files here on [Printables](https://www.prusaprinters.org/prints/69464-split-flap-display)!
 
 ## General
-The display's electronics use 1 x ESP01 as the master and up to 16 Arduinos as slaves. The ESP handles the web interface and communicates to the units via I2C. Each unit is resposible for setting the zero position of the drum on startup and displaying any letter the master send its way.
+The display's electronics use 1 x ESP01 (ESP8266) as the main hub and up to 16 Arduinos as receivers. The ESP handles the web interface and communicates to the units via I2C. Each unit is resposible for setting the zero position of the drum on startup and displaying any letter the main hub send its way.
 
 Assemble everything according to the instruction manual which you can find on [GitHub](./Instructions/SplitFlapInstructions.pdf).
 
@@ -79,8 +81,8 @@ This is how my 10 units are set, 1 means switch is in the up-position:
 
 ### ESP01/ESP8266
 #### Pre-requistites
-To upload the sketch to the ESP8266 you need to install a few things to your arduino IDE.
-- Install the ESP8266 board to your Arduino IDE. Uou can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/) 
+To upload the sketch to the ESP you need to install a few things to your arduino IDE.
+- Install the ESP8266 board to your Arduino IDE. You can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/) 
 - Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow [this tutorial](https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/) 
 - Install the following libraries via Library Manager:
   - [Arduino_JSON](https://github.com/arduino-libraries/Arduino_JSON)
@@ -110,7 +112,7 @@ Open the sketch `ESPMaster.ino` in the `ESPMaster` folder, change your board to 
 
 This uploads the website onto the ESP8266's file system.
 
-**NOTE:** No sketch has been uploaded yet! Only the static files. This will also only work on an older version of Arduino IDE < version 2. The latest Arduino IDE broke support for Plugins such as the LittleFS plugin.
+**NOTE:** No sketch has been uploaded yet! Only the static files. At the time of writing, this will also only work on an older version of Arduino IDE < version 2. The latest Arduino IDE broke support for Plugins such as the LittleFS plugin.
 
 #### Updating Settings of the Sketch
 There are several options in the Sketch you can modify to customise or change the behaviour of the display. These are marked in the code as "Configurable". 
@@ -147,7 +149,7 @@ There are several helper `define` variables to help during debugging/running:
 So far we've only uploaded static files to the ESP8266. You now need to `Upload` the sketch to the ESP8266. Click on Upload and the ESP8266 will be upadted with the sketch and you are done. Stick the ESP8266 onto the first unit's PCB and navigate to the IP-address the ESP8266 is getting assigned from your router.
 
 ### Common Mistakes
-- If the ESP is not talking to the units correctly, check the UNITSAMOUNT in the `ESPMaster.ino`. The amount of units connected has to match.
+- If the ESP is not talking to the units correctly, check the `UNITSAMOUNT` in the `ESPMaster.ino`. The amount of units connected has to match.
 - Ensure you upload the sketch and the LittleFS sketch upload to the ESP8266. 
 - When the system is powered, your Hall Sensor should only light up when a magnet is nearby. 
 - Ensure you are running an older version of Arduino IDE to be able to upload static files to the device. You will need a version prior to version 2.x.
