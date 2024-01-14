@@ -156,7 +156,7 @@ const char* countdownPath = "/countdown.txt";
 String alignment = "";
 String flapSpeed = "";
 String inputText = "";
-String currentDeviceMode = "";
+String deviceMode = "";
 String countdownToDateUnix = "";
 String lastWrittenText = "";
 String lastReceivedMessageDateTime = "";
@@ -421,12 +421,12 @@ void setup() {
         }
         else {
           //Only if device mode has changed
-          if (currentDeviceMode != newDeviceModeValue) {
-            currentDeviceMode = newDeviceModeValue;
+          if (deviceMode != newDeviceModeValue) {
+            deviceMode = newDeviceModeValue;
             inputText = newInputTextValue;
 
-            writeFile(LittleFS, deviceModePath, currentDeviceMode.c_str());
-            SerialPrintln("Device Mode Set: " + currentDeviceMode);
+            writeFile(LittleFS, deviceModePath, deviceMode.c_str());
+            SerialPrintln("Device Mode Set: " + deviceMode);
           }
         }
 
@@ -586,7 +586,7 @@ void loop() {
   //Do nothing if WiFi is not configured
   if (!isWifiConfigured) {
     //Show there is an error via text on display
-    currentDeviceMode = DEVICE_MODE_TEXT;
+    deviceMode = DEVICE_MODE_TEXT;
     alignment = ALIGNMENT_MODE_CENTER;
     showText("OFFLINE");
     delay(100);
@@ -636,13 +636,13 @@ void loop() {
     checkCountdown();
 
     //Mode Selection
-    if (currentDeviceMode == DEVICE_MODE_TEXT || currentDeviceMode == DEVICE_MODE_COUNTDOWN) { 
+    if (deviceMode == DEVICE_MODE_TEXT || deviceMode == DEVICE_MODE_COUNTDOWN) { 
       showText(inputText);
     } 
-    else if (currentDeviceMode == DEVICE_MODE_DATE) {
+    else if (deviceMode == DEVICE_MODE_DATE) {
       showText(timezone.dateTime(dateFormat));
     } 
-    else if (currentDeviceMode == DEVICE_MODE_CLOCK) {
+    else if (deviceMode == DEVICE_MODE_CLOCK) {
       showText(timezone.dateTime(clockFormat));
     } 
   }
@@ -656,7 +656,7 @@ String getCurrentSettingValues() {
   values["unitCount"] = UNITS_AMOUNT;
   values["alignment"] = alignment;
   values["flapSpeed"] = flapSpeed;
-  values["deviceMode"] = currentDeviceMode;
+  values["deviceMode"] = deviceMode;
   values["version"] = espVersion;
   values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
   values["lastWrittenText"] = lastWrittenText;

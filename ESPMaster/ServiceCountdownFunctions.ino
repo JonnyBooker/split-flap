@@ -1,7 +1,7 @@
 //Check if countdown is required and check how long left
 void checkCountdown() {
   //This will check if a day has passed since the last time the countdown was updated
-  if (currentDeviceMode == DEVICE_MODE_COUNTDOWN) {
+  if (deviceMode == DEVICE_MODE_COUNTDOWN) {
     long countdownInSeconds = atol(countdownToDateUnix.c_str());
 
     //Work out how long left

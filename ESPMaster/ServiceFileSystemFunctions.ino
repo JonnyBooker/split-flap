@@ -13,12 +13,12 @@ void loadValuesFromFileSystem() {
   countdownToDateUnix = readFile(LittleFS, countdownPath, "0");
   alignment = readFile(LittleFS, alignmentPath, ALIGNMENT_MODE_LEFT);
   flapSpeed = readFile(LittleFS, flapSpeedPath, "80");
-  currentDeviceMode = readFile(LittleFS, deviceModePath, DEVICE_MODE_TEXT);
+  deviceMode = readFile(LittleFS, deviceModePath, DEVICE_MODE_TEXT);
 
   SerialPrintln("Loaded Settings:");
   SerialPrintln("   Alignment: " + alignment);
   SerialPrintln("   Flap Speed: " + flapSpeed);
-  SerialPrintln("   Device Mode: " + currentDeviceMode);
+  SerialPrintln("   Device Mode: " + deviceMode);
   SerialPrintln("   Countdown to Date UNIX: " + countdownToDateUnix);
 }
 
