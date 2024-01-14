@@ -605,9 +605,6 @@ void loop() {
     String blankOutText2 = createRepeatingString('.');
     showText(blankOutText2);
 
-    //Try re-display the last message now we've reset if we was in text mode
-    showText(lastWrittenText);
-
     //We did a reset!
     isPendingUnitsReset = false;
 
