@@ -69,7 +69,7 @@
 #endif
 
 #include <Arduino.h>
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESP8266WiFi.h>
@@ -151,6 +151,7 @@ const char* alignmentPath = "/alignment.txt";
 const char* flapSpeedPath = "/flapspeed.txt";
 const char* deviceModePath = "/devicemode.txt";
 const char* countdownPath = "/countdown.txt";
+const char* scheduledMessagesPath = "/scheduled-messages.txt";
 
 //Variables for storing things for checking and use in normal running
 String alignment = "";
@@ -199,12 +200,12 @@ void setup() {
   //De-activate I2C if debugging the ESP, otherwise serial does not work
   //Wire.begin(D1, D2); //For NodeMCU testing only SDA=D1 and SCL=D2
 #endif
+  SerialPrintln("");
   SerialPrintln("#######################################################");
-  SerialPrintln("Master module starting...");
+  SerialPrintln("..............Split Flap Display Starting..............");
+  SerialPrintln("#######################################################");
 
   //Load and read all the things
-  initialiseFileSystem();
-  loadValuesFromFileSystem();
   initWiFi();
   
   //Helpful if want to force reset WiFi settings for testing
@@ -214,6 +215,10 @@ void setup() {
     //ezTime initialization
     waitForSync();
     timezone.setLocation(timezoneString);
+    
+    //Load various variables
+    initialiseFileSystem();
+    loadValuesFromFileSystem();
 
 #if OTA_ENABLE == true
     SerialPrintln("OTA is enabled! Yay!");
@@ -416,7 +421,7 @@ void setup() {
         //If its a new scheduled message, add it to the backlog and proceed, don't want to change device mode
         //Else, we do want to change the device mode and clear out the input text
         if (newMessageScheduleEnabledValue) {
-          addScheduledMessage(newInputTextValue, newMessageScheduleDateTimeUnixValue);
+          addAndPersistScheduledMessage(newInputTextValue, newMessageScheduleDateTimeUnixValue);
           SerialPrintln("New Scheduled Message added");
         }
         else {
@@ -429,7 +434,7 @@ void setup() {
           }
 
           //Only if we are showing text
-          if (deviceMode = DEVICE_MODE_TEXT) {
+          if (deviceMode == DEVICE_MODE_TEXT) {
             inputText = newInputTextValue;
           }
         }
@@ -543,7 +548,7 @@ void setup() {
     delay(250);
     webServer.begin();
 
-    SerialPrintln("Master module ready!");
+    SerialPrintln("Split Flap Ready!");
     SerialPrintln("#######################################################");
   }
   else {
@@ -592,6 +597,8 @@ void loop() {
     //Show there is an error via text on display
     deviceMode = DEVICE_MODE_TEXT;
     alignment = ALIGNMENT_MODE_CENTER;
+    flapSpeed = "80";
+
     showText("OFFLINE");
     delay(100);
     return;
@@ -651,38 +658,40 @@ void loop() {
 
 //Gets all the currently stored calues from memory in a JSON object
 String getCurrentSettingValues() {
-  JSONVar values;
+  JsonDocument document;
 
-  values["timezoneOffset"] = timezone.getOffset();
-  values["unitCount"] = UNITS_AMOUNT;
-  values["alignment"] = alignment;
-  values["flapSpeed"] = flapSpeed;
-  values["deviceMode"] = deviceMode;
-  values["version"] = espVersion;
-  values["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
-  values["lastWrittenText"] = lastWrittenText;
-  values["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
+  document["timezoneOffset"] = timezone.getOffset();
+  document["unitCount"] = UNITS_AMOUNT;
+  document["alignment"] = alignment;
+  document["flapSpeed"] = flapSpeed;
+  document["deviceMode"] = deviceMode;
+  document["version"] = espVersion;
+  document["lastTimeReceivedMessageDateTime"] = lastReceivedMessageDateTime;
+  document["lastWrittenText"] = lastWrittenText;
+  document["countdownToDateUnix"] = atol(countdownToDateUnix.c_str());
 
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
     ScheduledMessage scheduledMessage = scheduledMessages[scheduledMessageIndex];
     
-    values["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
-    values["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
+    document["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
+    document["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
   }
 
 #if OTA_ENABLE == true
-  values["otaEnabled"] = true;
-  values["isInOtaMode"] = isInOtaMode;
+  document["otaEnabled"] = true;
+  document["isInOtaMode"] = isInOtaMode;
 #else
-  values["otaEnabled"] = false;
+  document["otaEnabled"] = false;
 #endif
 
 #if WIFI_SETUP_MODE == AP
-  values["wifiSettingsResettable"] = true;
+  document["wifiSettingsResettable"] = true;
 #else
-  values["wifiSettingsResettable"] = false;
+  document["wifiSettingsResettable"] = false;
 #endif
   
-  String jsonString = JSON.stringify(values);
+  String jsonString;
+  serializeJson(document, jsonString);
+
   return jsonString;
 }
