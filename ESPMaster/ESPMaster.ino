@@ -423,10 +423,14 @@ void setup() {
           //Only if device mode has changed
           if (deviceMode != newDeviceModeValue) {
             deviceMode = newDeviceModeValue;
-            inputText = newInputTextValue;
 
             writeFile(LittleFS, deviceModePath, deviceMode.c_str());
             SerialPrintln("Device Mode Set: " + deviceMode);
+          }
+
+          //Only if we are showing text
+          if (deviceMode = DEVICE_MODE_TEXT) {
+            inputText = newInputTextValue;
           }
         }
 
