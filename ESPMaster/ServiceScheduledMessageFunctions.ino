@@ -58,7 +58,7 @@ void checkScheduledMessages() {
 
     if (currentTimeUnix > scheduledMessage.ScheduledDateTimeUnix) {
       SerialPrintln("Scheduled Message due to be shown: " + scheduledMessage.Message);
-      showText(scheduledMessage.Message, 7500);
+      showText(scheduledMessage.Message, scheduledMessageDisplayTimeMillis);
 
       scheduledMessages.remove(scheduledMessageIndex);
       writeScheduledMessagesToFile();

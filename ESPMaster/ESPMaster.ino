@@ -106,6 +106,9 @@ const char* timezoneString = "Europe/London";
 const char* dateFormat = "d.m.Y"; //Examples: d.m.Y -> 11.09.2021, D M y -> SAT SEP 21
 const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 
+//How long to show a message for when a scheduled message is shown for
+const int scheduledMessageDisplayTimeMillis = 7500;
+
 /* .------------------------------------------------------------. */
 /* | ___         _               ___     _   _   _              | */
 /* |/ __|_  _ __| |_ ___ _ __   / __|___| |_| |_(_)_ _  __ _ ___| */
