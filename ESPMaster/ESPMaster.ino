@@ -633,14 +633,12 @@ void loop() {
   }
 #endif
 
-  //ezTime library function
+  //ezTime library sync
   events(); 
-
-  //Reset loop delay
-  unsigned long currentMillis = millis();
   
-  //Delay to not spam web requests
-  if (currentMillis - previousMillis >= 1024) {
+  //Process every second
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= 1000) {
     previousMillis = currentMillis;
 
     checkScheduledMessages();

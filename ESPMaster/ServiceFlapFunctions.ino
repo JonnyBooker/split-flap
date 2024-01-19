@@ -59,9 +59,11 @@ void showMessage(String message, int flapSpeed) {
   //Format string per alignment choice
   if (alignment == ALIGNMENT_MODE_LEFT) {
     message = leftString(message);
-  } else if (alignment == ALIGNMENT_MODE_RIGHT) {
+  } 
+  else if (alignment == ALIGNMENT_MODE_RIGHT) {
     message = rightString(message);
-  } else if (alignment == ALIGNMENT_MODE_CENTER) {
+  } 
+  else if (alignment == ALIGNMENT_MODE_CENTER) {
     message = centerString(message);
   }
 
