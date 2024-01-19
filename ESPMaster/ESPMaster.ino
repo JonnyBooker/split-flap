@@ -121,7 +121,7 @@ const int scheduledMessageDisplayTimeMillis = 7500;
   behave a little strange.
 */
 //The current version of code to display on the UI
-const char* espVersion = "1.4.0";
+const char* espVersion = "2.0.0";
 
 //All the letters on the units that we have to be displayed. You can change these if it so pleases at your own risk
 const char letters[] = {' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '&', '#', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '.', '-', '?', '!'};
