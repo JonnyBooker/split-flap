@@ -85,16 +85,15 @@ To upload the sketch to the ESP you need to install a few things to your arduino
 - Install the ESP8266 board to your Arduino IDE. You can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/) 
 - Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow [this tutorial](https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/) 
 - Install the following libraries via Library Manager:
-  - [Arduino_JSON](https://github.com/arduino-libraries/Arduino_JSON)
-  - [ESPAsyncWebServer](https://github.com/lacamera/ESPAsyncWebServer)
+  - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.0.1
+  - [ESPAsyncWebServer](https://github.com/lacamera/ESPAsyncWebServer) - Version: 1.2.7
     - Dependencies which should be installed automatically:
       - [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP)
       - [AsyncTCP](https://github.com/dvarrel/AsyncTCP)
-  - [ezTime](https://github.com/ropg/ezTime)
-  - [NTPClient](https://github.com/arduino-libraries/NTPClient)
-  - [LinkedList](https://github.com/ivanseidel/LinkedList)
-  - [WiFiManager](https://github.com/tzapu/WiFiManager)
-
+  - [NTPClient](https://github.com/arduino-libraries/NTPClient) - Version: 3.2.1
+  - [ezTime](https://github.com/ropg/ezTime) - Version: 0.8.3
+  - [LinkedList](https://github.com/ivanseidel/LinkedList) - Version: 1.3.3
+  - [WiFiManager](https://github.com/tzapu/WiFiManager) - Version: 2.0.16-rc.2
 To upload sketches to the ESP8266 you can either use an [Arduino Uno](https://create.arduino.cc/projecthub/pratikdesai/how-to-program-esp8266-esp-01-module-with-arduino-uno-598166) or you can buy a dedicated programmer. It is highly recommend getting a programmer as it makes uploading programs onto the ESP8266 much faster. 
 
 > Note: Be wary of ESP8266 programmers that are available which allow USB connection to your PC which may not have programming abilities. Typically extra switches are available so that the ESP8266 can be put in programming mode, although you can modify the programmer through a simple solder job to allow it to enter programming mode. Examples can be found in the customer reviews of [Amazon](https://www.amazon.co.uk/gp/product/B078J7LDLY/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&th=1). 
