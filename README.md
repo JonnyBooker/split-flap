@@ -85,7 +85,7 @@ To upload the sketch to the ESP you need to install a few things to your arduino
 - Install the ESP8266 board to your Arduino IDE. You can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/) 
 - Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow [this tutorial](https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/) 
 - Install the following libraries via Library Manager:
-  - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.0.3
+  - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.0.4
   - [ESPAsyncWebSrv](https://github.com/dvarrel/ESPAsyncWebSrv) - Version: 1.2.7
     - Dependencies which should be installed automatically:
       - [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP)

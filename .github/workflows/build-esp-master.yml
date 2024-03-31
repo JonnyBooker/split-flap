@@ -33,9 +33,9 @@ jobs:
             - ./ESPMaster
           libraries: |
             - name: ArduinoJson
-              version: 7.0.3
+              version: 7.0.4
             - name: ArduinoOTA
-              version: 1.0.12
+              version: 1.1.0
             - name: ESPAsyncWebSrv
               version: 1.2.7
             - name: ezTime
