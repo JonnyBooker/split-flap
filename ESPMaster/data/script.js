@@ -88,7 +88,7 @@ function loadPage() {
 	//Set date time fields to be a minimum of todays date/time add 1 minute
 	var tzOffset = timezoneOffset * 60000;
 	document.querySelectorAll('input[type="datetime-local"]').forEach((dateTimeElement) => {
-		var currentDateTime = (new Date(Date.now() - tzOffset + 60000)).toISOString().slice(0, -8);
+		var currentDateTime = convertDateToString((new Date(Date.now() - tzOffset + 60000)));
 		dateTimeElement.value = dateTimeElement.min = currentDateTime;
 	});
 
@@ -105,7 +105,8 @@ function loadPage() {
 		showScheduledMessages([
 			{
 				"scheduledDateTimeUnix": 1690134480,
-				"message": "Test Message 1"
+				"message": "Test Message 1",
+				"showIndefinitely": false
 			},
 		]);
 
@@ -285,20 +286,31 @@ function setCountdownDate(dateUnix) {
 	if (dateUnix !== 0) {
 		var countdownDate = new Date(dateUnix * 1000);
 		if (countdownDate >= currentDate) {
-			currentCountdownDate.value = countdownDate.toISOString().slice(0, 10);
+			currentCountdownDate.value = convertDateToString(countdownDate);
 
 			if (countdownDate - currentDate < 24000) {
-				currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
+				currentCountdownDate.min = convertDateToString(nextDayDate);
 				return;
 			}
 		}
 	}
 	else {
 		//Set date fields to be a minimum of tomorrows date	
-		currentCountdownDate.value = nextDayDate.toISOString().slice(0, 10);
+		currentCountdownDate.value = convertDateToString(nextDayDate);
 	}
 
-	currentCountdownDate.min = nextDayDate.toISOString().slice(0, 10);
+	currentCountdownDate.min = convertDateToString(nextDayDate);
+}
+
+function convertDateToString(dateTime) {
+	const year = dateTime.getFullYear();
+	const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+  	const day = String(dateTime.getDate()).padStart(2, '0');
+	  
+	const hours = String(dateTime.getHours()).padStart(2, '0');
+	const minutes = String(dateTime.getMinutes()).padStart(2, '0');
+
+	return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
 //Sets the last received post message to the server
@@ -309,14 +321,14 @@ function setLastReceivedMessage(time) {
 
 //Used for scheduling messages
 function showHideScheduledMessageInput() {
-	var dateTimeElement = document.getElementById("inputScheduledDateTime");
+	var scheduleOptionsElement = document.getElementById("divScheduleOptions");
 	var checkboxScheduled = document.getElementById("inputCheckboxScheduleEnabled");
 
 	if (checkboxScheduled.checked) {
-		dateTimeElement.classList.remove("hidden")
+		scheduleOptionsElement.classList.remove("hidden")
 	}
 	else {
-		dateTimeElement.classList.add("hidden")
+		scheduleOptionsElement.classList.add("hidden")
 	}
 }
 
@@ -353,11 +365,15 @@ function showScheduledMessages(scheduledMessages) {
 		var timeElement = document.createElement("div");
 		timeElement.className = "time";
 		timeElement.innerText = new Date((scheduledMessage.scheduledDateTimeUnix * 1000) + (timezoneOffset * 60000)).toString().slice(0, -34);
+		
+		//Create a element to show the indefinite...ness...
+		var message = `<b>Message:</b> ${scheduledMessage.message.trim() == "" ? "<Blank>" : scheduledMessage.message}` 
+		var isIndefinitely = `<b>Shown Indefinitely:</b> ${scheduledMessage.showIndefinitely ? "Yes" : "No"}`;
 
 		//Create a element to show the text
 		var textElement = document.createElement("div");
 		textElement.className = "text";
-		textElement.innerText = scheduledMessage.message.trim() == "" ? "<Blank>" : scheduledMessage.message;
+		textElement.innerHTML = `${message}<br>${isIndefinitely}`;
 
 		//Create a remove button
 		var actionElement = document.createElement("div");

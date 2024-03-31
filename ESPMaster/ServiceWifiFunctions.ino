@@ -4,7 +4,7 @@ void initWiFi() {
 
   WiFi.mode(WIFI_STA);
 
-#if WIFI_SETUP_MODE == AP
+#if WIFI_USE_DIRECT == false
   SerialPrintln("Setting up WiFi AP Setup Mode");
 
   wifiManager.setTitle("Split-Flap Setup");
@@ -44,7 +44,7 @@ void initWiFi() {
 #else
   SerialPrintln("Setting up WiFi Direct");
 
-  if (ssid != "" && password != "") {
+  if (wifiDirectSsid != "" && wifiDirectPassword != "") {
     int maxAttemptsCount = 0;
     
     WiFi.begin(wifiDirectSsid, wifiDirectPassword);

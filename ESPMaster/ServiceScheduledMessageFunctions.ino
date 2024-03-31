@@ -1,12 +1,17 @@
 //Replace/add a scheduled message and persist the result afterwards
-void addAndPersistScheduledMessage(String scheduledText, long scheduledDateTimeUnix) {
-  addScheduledMessage(scheduledText, scheduledDateTimeUnix);
+void addAndPersistScheduledMessage(String scheduledText, long scheduledDateTimeUnix, bool showIndefinitely) {
+  addScheduledMessage(scheduledText, scheduledDateTimeUnix, showIndefinitely);
   writeScheduledMessagesToFile();
 }
 
 //Replace/add a scheduled message
-void addScheduledMessage(String scheduledText, long scheduledDateTimeUnix) {
-  SerialPrintln("Processing New Scheduled Message: " + scheduledText);
+void addScheduledMessage(String scheduledText, long scheduledDateTimeUnix, bool showIndefinitely) {
+  SerialPrintln("Processing New Scheduled Message");
+  SerialPrintln("-- Message: " + scheduledText);
+  SerialPrint("-- Unix: ");
+  SerialPrintln(scheduledDateTimeUnix);
+  SerialPrint("-- Show Indefinitely: ");
+  SerialPrintln(showIndefinitely ? "Yes" : "No");
 
   //Find the existing scheduled message and update it if one exists
   for(int scheduledMessageIndex = 0; scheduledMessageIndex < scheduledMessages.size(); scheduledMessageIndex++) {
@@ -22,7 +27,7 @@ void addScheduledMessage(String scheduledText, long scheduledDateTimeUnix) {
   //Add the new scheduled message with the new value
   if (scheduledDateTimeUnix > timezone.now()) {
     SerialPrintln("Adding new Scheduled Message");
-    scheduledMessages.add({scheduledText, scheduledDateTimeUnix});
+    scheduledMessages.add({scheduledText, scheduledDateTimeUnix, showIndefinitely});
   }
   else {
     SerialPrintln("Not adding Scheduled Message as it is in the past");
@@ -58,7 +63,18 @@ void checkScheduledMessages() {
 
     if (currentTimeUnix > scheduledMessage.ScheduledDateTimeUnix) {
       SerialPrintln("Scheduled Message due to be shown: " + scheduledMessage.Message);
-      showText(scheduledMessage.Message, scheduledMessageDisplayTimeMillis);
+      SerialPrintln("Scheduled Message to be Shown Indefinitey: " + scheduledMessage.ShowIndefinitely ? "Yes" : "No");
+
+      if (scheduledMessage.ShowIndefinitely) 
+      {
+        deviceMode = DEVICE_MODE_TEXT;
+        inputText = scheduledMessage.Message;
+        showText(scheduledMessage.Message);
+      }
+      else
+      {
+        showText(scheduledMessage.Message, scheduledMessageDisplayTimeMillis);
+      }      
 
       scheduledMessages.remove(scheduledMessageIndex);
       writeScheduledMessagesToFile();
@@ -80,8 +96,9 @@ void readScheduledMessagesFromJson(String scheduledMessagesJson) {
         for (JsonVariant value : jsonDocument.as<JsonArray>()) {
           long scheduledDateTimeUnix = value["scheduledDateTimeUnix"];
           String message = value["message"];
+          bool showIndefinitely = value["showIndefinitely"];
 
-          addScheduledMessage(message, scheduledDateTimeUnix);
+          addScheduledMessage(message, scheduledDateTimeUnix, showIndefinitely);
           addedScheduledMessageCount++;
         }
         
@@ -112,6 +129,7 @@ void writeScheduledMessagesToFile() {
       
       scheduledMessagesDocument[scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
       scheduledMessagesDocument[scheduledMessageIndex]["message"] = scheduledMessage.Message;
+      scheduledMessagesDocument[scheduledMessageIndex]["showIndefinitely"] = scheduledMessage.ShowIndefinitely;
     }
 
     String scheduledMessagesJson;

@@ -28,7 +28,7 @@
 #define OTA_ENABLE          true    //Option to enable OTA functionality
 #define UNITS_AMOUNT        10      //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
 #define SERIAL_BAUDRATE     115200  //Serial debugging BAUD rate
-#define WIFI_SETUP_MODE     AP      //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Options: AP or DIRECT
+#define WIFI_USE_DIRECT     false   //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Setting to false will setup as a AP.
 
 /* .--------------------------------------------------------. */
 /* | ___         _               ___       __ _             | */
@@ -45,7 +45,6 @@
 #define FLAP_AMOUNT         45      //Amount of Flaps in each unit
 #define MIN_SPEED           1       //Min Speed
 #define MAX_SPEED           12      //Max Speed
-#define WEBSERVER_H                 //Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
 
 /* .-----------------------------------. */
 /* | _    _ _                 _        | */
@@ -59,7 +58,9 @@
 
 //WiFi Setup Library if we use that mode
 //Specifically put here in this order to avoid conflict with other libraries
-#if WIFI_SETUP_MODE == AP
+#if WIFI_USE_DIRECT == false
+//Needed in order to be compatible with WiFiManager: https://github.com/me-no-dev/ESPAsyncWebServer/issues/418#issuecomment-667976368
+#define WEBSERVER_H
 #include <WiFiManager.h>
 #endif
 
@@ -89,7 +90,7 @@
 /*
   Settings you can feel free to change to customise how your display works.
 */
-//Used if connecting via "WIFI_SETUP_MODE" of "DIRECT" - Otherwise, leave blank
+//Used if connecting via "WIFI_USE_DIRECT" of "true" - Otherwise, leave blank
 const char* wifiDirectSsid = "";
 const char* wifiDirectPassword = "";
 
@@ -120,7 +121,7 @@ const int scheduledMessageDisplayTimeMillis = 7500;
   behave a little strange.
 */
 //The current version of code to display on the UI
-const char* espVersion = "2.1.0";
+const char* espVersion = "2.2.0";
 
 //All the letters on the units that we have to be displayed. You can change these if it so pleases at your own risk
 const char letters[] = {' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '&', '#', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '.', '-', '?', '!'};
@@ -134,6 +135,7 @@ const char* PARAM_DEVICEMODE = "deviceMode";
 const char* PARAM_INPUT_TEXT = "inputText";
 const char* PARAM_SCHEDULE_ENABLED = "scheduleEnabled";
 const char* PARAM_SCHEDULE_DATE_TIME = "scheduledDateTimeUnix";
+const char* PARAM_SCHEDULE_SHOW_INDEFINITELY = "scheduleShowIndefinitely";
 const char* PARAM_COUNTDOWN_DATE = "countdownDateTimeUnix";
 const char* PARAM_ID = "id";
 
@@ -165,8 +167,8 @@ String lastWrittenText = "";
 String lastReceivedMessageDateTime = "";
 bool alignmentUpdated = false;
 bool isPendingReboot = false;
-bool isPendingWifiReset = false;
 bool isPendingUnitsReset = false;
+bool isWifiConfigured = false;
 LList<ScheduledMessage> scheduledMessages;
 Timezone timezone; 
 
@@ -174,9 +176,9 @@ Timezone timezone;
 AsyncWebServer webServer(80);
 
 //Used for creating a Access Point to allow WiFi setup
-#if WIFI_SETUP_MODE == AP
+#if WIFI_USE_DIRECT == false
 WiFiManager wifiManager;
-bool isWifiConfigured = false;
+bool isPendingWifiReset = false;
 #endif
 
 //Used to denote that the system has gone into OTA mode
@@ -309,8 +311,8 @@ void setup() {
 
       bool submissionError = false;
       
-      bool newMessageScheduleEnabledValue;
       long newMessageScheduleDateTimeUnixValue;
+      bool newMessageScheduleEnabledValue, newMessageScheduleShowIndefinitely;
       String newAlignmentValue, newDeviceModeValue, newFlapSpeedValue, newInputTextValue, newCountdownToDateUnixValue;
       
       int params = request->params();
@@ -355,6 +357,14 @@ void setup() {
           if (p->name() == PARAM_SCHEDULE_ENABLED) {
             String newMessageScheduleEnabledString = p->value().c_str();
             newMessageScheduleEnabledValue = newMessageScheduleEnabledString == "on" ?
+              true : 
+              false;
+          }
+          
+          //HTTP POST Schedule Show Indefinitely
+          if (p->name() == PARAM_SCHEDULE_SHOW_INDEFINITELY) {
+            String newMessageScheduleShowIndefinitelyString = p->value().c_str();
+            newMessageScheduleShowIndefinitely = newMessageScheduleShowIndefinitelyString == "on" ?
               true : 
               false;
           }
@@ -423,7 +433,7 @@ void setup() {
         //If its a new scheduled message, add it to the backlog and proceed, don't want to change device mode
         //Else, we do want to change the device mode and clear out the input text
         if (newMessageScheduleEnabledValue) {
-          addAndPersistScheduledMessage(newInputTextValue, newMessageScheduleDateTimeUnixValue);
+          addAndPersistScheduledMessage(newInputTextValue, newMessageScheduleDateTimeUnixValue, newMessageScheduleShowIndefinitely);
           SerialPrintln("New Scheduled Message added");
         }
         else {
@@ -527,7 +537,7 @@ void setup() {
     });
 #endif
 
-#if WIFI_SETUP_MODE == AP
+#if WIFI_USE_DIRECT == false
     webServer.on("/reset-wifi", HTTP_GET, [](AsyncWebServerRequest * request) {
       SerialPrintln("Request to Reset WiFi Received");
       
@@ -584,6 +594,7 @@ void loop() {
     return;
   }
 
+#if WIFI_USE_DIRECT == false
   //Clear off the WiFi Manager Settings
   if (isPendingWifiReset) {
     SerialPrintln("Removing WiFi settings");
@@ -593,6 +604,7 @@ void loop() {
     isPendingReboot = true;
     return;
   }
+#endif
 
   //Do nothing if WiFi is not configured
   if (!isWifiConfigured) {
@@ -675,6 +687,7 @@ String getCurrentSettingValues() {
     
     document["scheduledMessages"][scheduledMessageIndex]["scheduledDateTimeUnix"] = scheduledMessage.ScheduledDateTimeUnix;
     document["scheduledMessages"][scheduledMessageIndex]["message"] = scheduledMessage.Message;
+    document["scheduledMessages"][scheduledMessageIndex]["showIndefinitely"] = scheduledMessage.ShowIndefinitely;
   }
 
 #if OTA_ENABLE == true
@@ -684,7 +697,7 @@ String getCurrentSettingValues() {
   document["otaEnabled"] = false;
 #endif
 
-#if WIFI_SETUP_MODE == AP
+#if WIFI_USE_DIRECT == false
   document["wifiSettingsResettable"] = true;
 #else
   document["wifiSettingsResettable"] = false;

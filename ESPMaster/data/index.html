@@ -95,11 +95,18 @@
 							</p>
 
 							<p>
-								<label for="scheduledDateTime">Schedule Message?</label>
+								<label for="inputCheckboxScheduleEnabled">Schedule Message?</label>
 								<input type="checkbox" id="inputCheckboxScheduleEnabled" name="scheduleEnabled"	onchange="showHideScheduledMessageInput()" />
-								<br>
-								<input type="datetime-local" class="hidden" id="inputScheduledDateTime"	name="scheduleDateTime">
-								<input type="hidden" id="inputHiddenScheduledDateTimeUnix" name="scheduledDateTimeUnix" value="0" />
+								<div id="divScheduleOptions" class="hidden">
+									<p>
+										<label for="scheduledDateTime">Show Indefinitely?</label>
+										<input type="checkbox" id="inputCheckboxShowIndefinitely" name="scheduleShowIndefinitely" />
+									</p>
+									<p>
+										<input type="datetime-local" id="inputScheduledDateTime" name="scheduleDateTime">
+										<input type="hidden" id="inputHiddenScheduledDateTimeUnix" name="scheduledDateTimeUnix" value="0" />
+									</p>
+								</div>
 							</p>				
 						</div>
 

@@ -2,6 +2,7 @@
 struct ScheduledMessage {
   String Message;
   long ScheduledDateTimeUnix;
+  bool ShowIndefinitely;
 };
 
 //Used as a work around for issues that linked list has with other libraries
