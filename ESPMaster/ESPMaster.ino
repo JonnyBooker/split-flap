@@ -30,6 +30,12 @@
 #define SERIAL_BAUDRATE     115200  //Serial debugging BAUD rate
 #define WIFI_USE_DIRECT     false   //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Setting to false will setup as a AP.
 
+/*
+  EXPERIMENTAL: Try to use your Router when possible to set a Static IP address for your device to avoid conflicts with other devices
+  on your network. This will try and setup your device with a static IP address of your chosing. See below for more details.
+*/
+#define WIFI_STATIC_IP      false
+
 /* .--------------------------------------------------------. */
 /* | ___         _               ___       __ _             | */
 /* |/ __|_  _ __| |_ ___ _ __   |   \ ___ / _(_)_ _  ___ ___| */
@@ -108,6 +114,19 @@ const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 
 //How long to show a message for when a scheduled message is shown for
 const int scheduledMessageDisplayTimeMillis = 7500;
+
+#if WIFI_STATIC_IP == true
+//Static IP address for your device. Try take care to not conflict with something else on your network otherwise
+//it is likely to not work
+IPAddress wifiDeviceStaticIp(192, 168, 1, 100);
+
+//Your router details
+IPAddress wifiRouterGateway(192, 168, 1, 1);
+IPAddress wifiSubnet(255, 255, 0, 0);
+
+//DNS Entry. Default: Google DNS
+IPAddress wifiPrimaryDns(8, 8, 8, 8);
+#endif
 
 /* .------------------------------------------------------------. */
 /* | ___         _               ___     _   _   _              | */

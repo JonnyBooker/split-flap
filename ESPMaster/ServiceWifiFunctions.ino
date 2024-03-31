@@ -7,6 +7,11 @@ void initWiFi() {
 #if WIFI_USE_DIRECT == false
   SerialPrintln("Setting up WiFi AP Setup Mode");
 
+#if WIFI_STATIC_IP == true
+  wifiManager.setSTAStaticIPConfig(wifiDeviceStaticIp, wifiRouterGateway, wifiSubnet, wifiPrimaryDns);
+  SerialPrintln("WiFi Static IP Configured");
+#endif
+
   wifiManager.setTitle("Split-Flap Setup");
   wifiManager.setHostname("Split-Flap");
   wifiManager.setDarkMode(true);
@@ -46,6 +51,15 @@ void initWiFi() {
 
   if (wifiDirectSsid != "" && wifiDirectPassword != "") {
     int maxAttemptsCount = 0;
+    
+#if WIFI_STATIC_IP == true
+    if (WiFi.config(wifiDeviceStaticIp, wifiRouterGateway, wifiSubnet, wifiPrimaryDns)) {
+      SerialPrintln("WiFi Static IP Configuration Success");
+    }
+    else {
+      SerialPrintln("WiFi Static IP Configuration could not take place");
+    }
+#endif
     
     WiFi.begin(wifiDirectSsid, wifiDirectPassword);
     SerialPrint("Connecting");
