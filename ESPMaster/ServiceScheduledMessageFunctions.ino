@@ -63,16 +63,15 @@ void checkScheduledMessages() {
 
     if (currentTimeUnix > scheduledMessage.ScheduledDateTimeUnix) {
       SerialPrintln("Scheduled Message due to be shown: " + scheduledMessage.Message);
-      SerialPrintln("Scheduled Message to be Shown Indefinitey: " + scheduledMessage.ShowIndefinitely ? "Yes" : "No");
+      SerialPrint("Scheduled Message to be Shown Indefinitely: ");
+      SerialPrintln(scheduledMessage.ShowIndefinitely ? "Yes" : "No");
 
-      if (scheduledMessage.ShowIndefinitely) 
-      {
+      if (scheduledMessage.ShowIndefinitely) {
         deviceMode = DEVICE_MODE_TEXT;
         inputText = scheduledMessage.Message;
         showText(scheduledMessage.Message);
       }
-      else
-      {
+      else {
         showText(scheduledMessage.Message, scheduledMessageDisplayTimeMillis);
       }      
 

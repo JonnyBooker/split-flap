@@ -249,9 +249,9 @@ input[type=datetime-local] {
 	font-size: 16px;
 	border-radius: 4px;
 	transition-duration: 0.4s;
-    justify-content: center;
-    align-items: center;
-    display: flex;
+	justify-content: center;
+	align-items: center;
+	display: flex;
 }
 
 .message .action .remove-button:hover {
