@@ -166,6 +166,30 @@ There are several helper `define` variables to help during debugging/running:
 - **UNIT_CALLS_DISABLE**
   - Use this to disable the communication with the Arduino Nano Units. This will mean you can check code over function for the ESP module.
 
+#### Experiments
+
+In the main Sketch under "Configurable Defines", an "EXPERIMENTAL" section has been included. This section has been created for features that are things that can be changed and trialled however aren't going to be necessary to be changed for general use.
+
+##### Static IP Address
+
+A feature request of being able to set a Static IP Address was created by [beroliv](https://github.com/beroliv) (thank you for the suggestion). This was to get around issues whereby in some routers, there was issues in being able to do this.
+
+Code has been added to be able to set a Static IP Address on device. To do this:
+
+1. Set the `WIFI_STATIC_IP` variable to `true` (defaulted to `false`)
+2. Update the following settings as necessary for your needs:
+
+   ```c++
+   IPAddress wifiDeviceStaticIp(192, 168, 1, 100);
+
+   IPAddress wifiRouterGateway(192, 168, 1, 1);
+   IPAddress wifiSubnet(255, 255, 0, 0);
+
+   IPAddress wifiPrimaryDns(8, 8, 8, 8);
+   ```
+
+**Suggestion:** Set your device up with a Static IP via your router if possible and to avoid conflicts on your network, however feel free to run this code if you are not able to. Testing this functionality showed it does work in both AP/Direct WiFi modes.
+
 #### Sketch Upload
 
 So far we've only uploaded static files to the ESP8266. You now need to `Upload` the sketch to the ESP8266. Click on Upload and the ESP8266 will be upadted with the sketch and you are done. Stick the ESP8266 onto the first unit's PCB and navigate to the IP-address the ESP8266 is getting assigned from your router.
