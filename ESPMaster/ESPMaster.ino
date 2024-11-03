@@ -106,6 +106,14 @@ const char* otaPassword = "";
 //Change this to your timezone, use the TZ database name
 //https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 const char* timezoneString = "Europe/London";
+// timezonePosix: Defines time zone rules in POSIX format. Empty here, so no custom rules are applied.
+// Example for Central European Time: const char* timezonePosix = "CET-1CEST,M3.5.0,M10.5.0/3";
+const char* timezonePosix = "";
+
+// timezoneServer: Specifies the NTP server for time sync. Empty here, so it defaults to "pool.ntp.org".
+// Example: const char* timezoneServer = "pool.ntp.org";
+const char* timezoneServer = "";
+
 
 //If you want to have a different date or clock format change these two
 //Complete table with every char: https://github.com/ropg/ezTime#getting-date-and-time
@@ -236,8 +244,26 @@ void setup() {
 
   if (isWifiConfigured && !isPendingReboot) {
     //ezTime initialization
+
+    if (strlen(timezoneServer) > 0) {  // Check if timezoneServer is not empty
+        setServer(timezoneServer);
+    } else {
+        SerialPrintln("No timezone server specified, skipping setServer()");
+    }
+    
     waitForSync();
     timezone.setLocation(timezoneString);
+
+    if (strlen(timezonePosix) > 0) {  // Check if timezonePosix is not empty
+      timezone.setPosix(timezonePosix);
+    } else {
+        SerialPrintln("No timezone Posix specified, skipping setPosix()");
+    }
+    setDebug(DEBUG);  // if you want to see the communication to the server and the logs 
+
+
+    SerialPrintln("Current time: ");
+    SerialPrintln(timezone.dateTime());
     
     //Load various variables
     initialiseFileSystem();
