@@ -510,7 +510,7 @@ void setup() {
       
       String html = "<div style='text-align:center'>";
       html += "<font face='arial'><h1>Split Flap - OTA Update Mode</h1>";
-      html += "<p>OTA mode has been started. You can now update your module via WiFI. Open your Arduino IDE and select the new port in \"Tools\" menu and upload the your sketch as normal!<p>";
+      html += "<p>OTA mode has been started. You can now update your module via WiFI.<p>";
       html += "<p>Open your Arduino IDE and select the new port in \"Tools\" menu and upload the your sketch as normal!</p>";
       html += "<p>After you have carried out your update, the system will automatically be rebooted. You can go to the main home page after this time by clicking the button below or going to '/'.</p>";
       html += "<p>You can take the system out of this mode by clicking the button to reboot below or going to '/reboot'.</p>";
