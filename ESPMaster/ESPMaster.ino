@@ -246,9 +246,9 @@ void setup() {
     //ezTime initialization
 
     if (strlen(timezoneServer) > 0) {  // Check if timezoneServer is not empty
-        setServer(timezoneServer);
+      setServer(timezoneServer);
     } else {
-        SerialPrintln("No timezone server specified, skipping setServer()");
+      SerialPrintln("No timezone server specified, skipping setServer()");
     }
     
     waitForSync();
