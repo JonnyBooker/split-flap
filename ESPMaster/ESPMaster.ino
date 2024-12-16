@@ -257,10 +257,9 @@ void setup() {
     if (strlen(timezonePosix) > 0) {  // Check if timezonePosix is not empty
       timezone.setPosix(timezonePosix);
     } else {
-        SerialPrintln("No timezone Posix specified, skipping setPosix()");
+      SerialPrintln("No timezone Posix specified, skipping setPosix()");
     }
     setDebug(DEBUG);  // if you want to see the communication to the server and the logs 
-
 
     SerialPrintln("Current time: ");
     SerialPrintln(timezone.dateTime());
