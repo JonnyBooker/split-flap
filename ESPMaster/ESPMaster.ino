@@ -357,7 +357,7 @@ void setup() {
       
       long newMessageScheduleDateTimeUnixValue;
       bool newMessageScheduleEnabledValue, newMessageScheduleShowIndefinitely;
-      String newAlignmentValue, newDeviceModeValue, newFlapSpeedValue, newInputTextValue, newCountdownToDateUnixValue;
+      String newAlignmentValue = alignment, newDeviceModeValue = deviceMode, newFlapSpeedValue = flapSpeed, newInputTextValue = inputText, newCountdownToDateUnixValue = countdownToDateUnix;
       
       int params = request->params();
       for (int paramIndex = 0; paramIndex < params; paramIndex++) {
