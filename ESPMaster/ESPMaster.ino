@@ -29,6 +29,7 @@
 #define UNITS_AMOUNT        10      //Amount of connected units !IMPORTANT TO BE SET CORRECTLY!
 #define SERIAL_BAUDRATE     115200  //Serial debugging BAUD rate
 #define WIFI_USE_DIRECT     false   //Option to either direct connect to a WiFi Network or setup a AP to configure WiFi. Setting to false will setup as a AP.
+#define USE_MULTICAST       false    //Option to broadcast a ".local" URL on your local network default split-flap.local. You can change the name under configurable settings.
 
 /*
   EXPERIMENTAL: Try to use your Router when possible to set a Static IP address for your device to avoid conflicts with other devices
@@ -80,6 +81,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebSrv.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <ezTime.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -122,6 +124,10 @@ const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 
 //How long to show a message for when a scheduled message is shown for
 const int scheduledMessageDisplayTimeMillis = 7500;
+
+//Name to broadcast when USE_MULTICAST is enabled. Default is split-flap.local.. Be minful to choose something
+//unique to your local network. if running more than one display you'll need a unique name for each. 
+const char* mdnsName = "split-flap";
 
 #if WIFI_STATIC_IP == true
 //Static IP address for your device. Try take care to not conflict with something else on your network otherwise
@@ -270,6 +276,14 @@ void setup() {
 
 #if OTA_ENABLE == true
     SerialPrintln("OTA is enabled! Yay!");
+#endif
+
+#if USE_MULTICAST == true
+  if (MDNS.begin(mdnsName)) { 
+      Serial.println("mDNS responder started");
+    } else {
+      Serial.println("Error setting up MDNS responder!");
+    }
 #endif
 
     //Web Server Endpoint configuration
@@ -648,6 +662,10 @@ void loop() {
     isPendingReboot = true;
     return;
   }
+#endif
+
+#if USE_MULTICAST == true
+  MDNS.update();
 #endif
 
   //Do nothing if WiFi is not configured
