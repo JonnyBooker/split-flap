@@ -259,10 +259,10 @@ int calibrate(bool initialCalibration) {
   int i = 0;
   while (!reachedMarker) {
     int currentHallValue = digitalRead(HALLPIN);
-    if (currentHallValue == 1 && i < 50) { //already in zero position after just a bit of movement -> move out a bit and do the calibration {
+    if (currentHallValue != 1 && i == 0) { //already in zero position move out a bit and do the calibration
       //not reached yet
-      i = i + 50;
-      stepper.step(ROTATIONDIRECTION * 50); //move 50 more steps to get out of scope of hall
+      i = 50;
+      stepper.step(ROTATIONDIRECTION * 50); //move 50 steps to get out of scope of hall
     }
     else if (currentHallValue == 1) {
       //not reached yet
