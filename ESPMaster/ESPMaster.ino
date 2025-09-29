@@ -280,9 +280,9 @@ void setup() {
 
 #if USE_MULTICAST == true
   if (MDNS.begin(mdnsName)) { 
-      Serial.println("mDNS responder started");
+      SerialPrintln("mDNS responder started");
     } else {
-      Serial.println("Error setting up MDNS responder!");
+      SerialPrintln("Error setting up MDNS responder!");
     }
 #endif
 
