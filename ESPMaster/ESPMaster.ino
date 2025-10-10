@@ -121,7 +121,7 @@ const char* dateFormat = "d.m.Y"; //Examples: d.m.Y -> 11.09.2021, D M y -> SAT 
 const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 
 //How long to show a message for when a scheduled message is shown for
-const int scheduledMessageDisplayTimeSecs = 8;
+const int scheduledMessageDisplayTimeMillis = 7500;
 
 #if WIFI_STATIC_IP == true
 //Static IP address for your device. Try take care to not conflict with something else on your network otherwise
@@ -153,7 +153,7 @@ const char* espVersion = "2.2.0";
 //All the letters on the units that we have to be displayed. You can change these if it so pleases at your own risk
 const char letters[] = {' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '$', '&', '#', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '.', '-', '?', '!'};
 int displayState[UNITS_AMOUNT];
-unsigned long previousMillis = 0;
+uint64_t previousMillis = 0;
 
 //Search for parameter in HTTP POST request
 const char* PARAM_ALIGNMENT = "alignment";
@@ -165,6 +165,9 @@ const char* PARAM_SCHEDULE_DATE_TIME = "scheduledDateTimeUnix";
 const char* PARAM_SCHEDULE_SHOW_INDEFINITELY = "scheduleShowIndefinitely";
 const char* PARAM_COUNTDOWN_DATE = "countdownDateTimeUnix";
 const char* PARAM_ID = "id";
+
+// Offset in seconds after which to display messages received in the API. 0 could result in messages being discarded in the 'addScheduledMessage' call
+u_short REMOTE_MESSAGE_SCHEDULE_OFFSET = 5;
 
 //Device Modes
 const char* DEVICE_MODE_TEXT = "text";
@@ -198,7 +201,7 @@ bool isPendingUnitsReset = false;
 bool isWifiConfigured = false;
 LList<ScheduledMessage> scheduledMessages;
 Timezone timezone; 
-unsigned long delayNextUpdateUntil = 0;
+uint64_t delayNextUpdateUntil = 0;
 
 //Create AsyncWebServer object on port 80
 AsyncWebServer webServer(80);
@@ -301,7 +304,7 @@ void setup() {
           }
 
           SerialPrintln("Remote message received: " + message);
-          addAndPersistScheduledMessage(message, timezone.now() + 5, false);
+          addAndPersistScheduledMessage(message, timezone.now() + REMOTE_MESSAGE_SCHEDULE_OFFSET, false);
 
           request->send(200, "text/plain", "Message accepted");
     });
@@ -709,9 +712,9 @@ void loop() {
   //ezTime library sync
   events(); 
   
-  //Process every second
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= 1000 && delayNextUpdateUntil < timezone.now()) {
+  //Process every second. Millis long rollover every 50 days, so use ezTime now for accuracy
+  uint64_t currentMillis = timezone.now() * 1000 + timezone.ms();
+  if (currentMillis - previousMillis >= 1000 && delayNextUpdateUntil < currentMillis) {
     previousMillis = currentMillis;
     delayNextUpdateUntil = 0;
 

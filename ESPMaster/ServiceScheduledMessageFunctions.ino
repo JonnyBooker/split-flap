@@ -74,7 +74,7 @@ bool checkScheduledMessages() {
         didShowText = true;
       }
       else {
-        showText(scheduledMessage.Message, scheduledMessageDisplayTimeSecs);
+        showText(scheduledMessage.Message, scheduledMessageDisplayTimeMillis);
         didShowText = true;
       }      
 
