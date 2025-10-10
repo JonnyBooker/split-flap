@@ -72,7 +72,7 @@ void setup() {
   Serial.println("starting unit");
   Serial.print("I2CAddress: ");
   Serial.println(i2cAddress);
-  digitalWrite (LED_BUILTIN, HIGH); // turns on LED when waking up, for debugging
+  digitalWrite(LED_BUILTIN, HIGH); // turns on LED when waking up, for debugging
 #endif
 
   //I2C function assignment
