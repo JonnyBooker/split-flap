@@ -190,6 +190,23 @@ Code has been added to be able to set a Static IP Address on device. To do this:
 
 **Suggestion:** Set your device up with a Static IP via your router if possible and to avoid conflicts on your network, however feel free to run this code if you are not able to. Testing this functionality showed it does work in both AP/Direct WiFi modes.
 
+#### WebAPI
+
+A route has been added to the Webserver over which simple messages can be posted.
+In its current state the route `/remote-message` accepts a URL encoded message, example requests are located in the `Requests` folder.
+The requests can be tested out using the VSCode Plugin [rest-client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client).
+
+#### Telegram Bot
+
+As a fun way to use the display a simple Telegram Bot has been implemented in the `Telegram_Bot` folder.\
+It can be hosted on any server (on the same network as the display) running python3 and needs a [bot token](https://core.telegram.org/bots/tutorial#obtain-your-bot-token) to connect to the Telegram servers.
+
+Place the ip address of you display in the `display_ip` variable. The bot does not need any further routing or port forwarding as it uses a webhook to communicate with the telegram servers.
+
+Insert your token into the `bot_token` variable and you should be all set to go.
+To setup the bot, run `pip install -r requirements.txt` to install the dependencies.
+Start the bot using `python3 flap-bot.py`.
+
 #### Sketch Upload
 
 So far we've only uploaded static files to the ESP8266. You now need to `Upload` the sketch to the ESP8266. Click on Upload and the ESP8266 will be upadted with the sketch and you are done. Stick the ESP8266 onto the first unit's PCB and navigate to the IP-address the ESP8266 is getting assigned from your router.

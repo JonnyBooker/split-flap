@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 import datetime
 import logging
+from typing import List
 
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 import http.client, urllib.parse
+
+bot_token = "BOT_TOKEN_HERE"
+trim_messages_to_size = 10
+display_ip = "DISPLAY_IP_HERE"
+admin_username = "YOUR_TELEGRAM_HANDLE_HERE"
 
 # Enable logging
 logging.basicConfig(
@@ -14,6 +20,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
+history: List[tuple[str, str]] = []
 
 async def start(update: Update, _context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
@@ -30,7 +37,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("Please wait a minute :)")
         return
 
-    message = update.message.text[:10]
+    message = update.message.text[:trim_messages_to_size]
     user = update.message.from_user
 
     logger.info("Message posted by %s: %s", user.username, message)
@@ -40,7 +47,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
         """The ESP accepts urlencoded parameters."""
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-        conn = http.client.HTTPConnection("192.168.178.137")
+        conn = http.client.HTTPConnection(display_ip)
         conn.request("POST", "/remote-message", params, headers)
         response = conn.getresponse()
         conn.close()
@@ -55,13 +62,16 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data["last_post"] = datetime.datetime.now()
 
 async def print_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text("\n".join(x[1] for x in history))
+    if update.message.from_user.username == admin_username:
+        await update.message.reply_text("\n".join("@" + x[0] + ": " + x[1] for x in history))
+    else:
+        await update.message.reply_text("\n".join(x[1] for x in history))
 
 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("TOKEN").build()
+    application = Application.builder().token(bot_token).build()
 
     application.add_handler(CommandHandler("start", start))
 
