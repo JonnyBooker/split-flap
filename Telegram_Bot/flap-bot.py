@@ -37,17 +37,25 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     params = urllib.parse.urlencode({'message': message})
 
-    """The ESP accepts urlencoded parameters."""
-    headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-    conn = http.client.HTTPConnection("192.168.178.137")
-    conn.request("POST", "/remote-message", params, headers)
-    response = conn.getresponse()
-    conn.close()
+    try:
+        """The ESP accepts urlencoded parameters."""
+        headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        conn = http.client.HTTPConnection("192.168.178.137")
+        conn.request("POST", "/remote-message", params, headers)
+        response = conn.getresponse()
+        conn.close()
 
-    logger.info("Flap Response: %s %s", response.status, response.reason)
+        logger.info("Flap Response: %s %s", response.status, response.reason)
+
+        history.append((user.username, message))
+    except:
+        logger.error("Error connecting to ESP")
 
     """Update the users last post timestamp."""
     context.user_data["last_post"] = datetime.datetime.now()
+
+async def print_history(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("\n".join(x[1] for x in history))
 
 
 def main() -> None:
@@ -59,6 +67,7 @@ def main() -> None:
 
     # on non command i.e message - forward to the ESP
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_handler(CommandHandler("history", print_history))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
