@@ -90,8 +90,8 @@ A simple sketch has been written to set the offset. Upload the `EEPROM_Write_Off
 Every units address is set by a DIP switch. They need to be set ascending from zero in binary.
 This is how my 10 units are set, 1 means switch is in the up-position:
 | Unit 1 | Unit 2 | Unit 3 | Unit 4 | Unit 5 | Unit 6 | Unit 7 | Unit 8 | Unit 9 | Unit 10 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0000 | 0001 | 0010 | 0011 | 0100 | 0101 | 0110 | 0111 | 1000 | 1001 |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------- |
+| 0000   | 0001   | 0010   | 0011   | 0100   | 0101   | 0110   | 0111   | 1000   | 1001    |
 
 ### ESP01/ESP8266
 
@@ -102,7 +102,7 @@ To upload the sketch to the ESP you need to install a few things to your arduino
 - Install the ESP8266 board to your Arduino IDE. You can follow [this tutorial](https://randomnerdtutorials.com/how-to-install-esp8266-board-arduino-ide/)
 - Install the arduino ESP8266 littleFS plugin to use the file system of the ESP, you can follow [this tutorial](https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/)
 - Install the following libraries via Library Manager:
-  - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.0.4
+  - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.4.2
   - [ESPAsyncWebServer](https://github.com/ESP32Async/ESPAsyncWebServer) - Version: 3.8.1
     - Dependencies which should be installed automatically:
       - [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP)
