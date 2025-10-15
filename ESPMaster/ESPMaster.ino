@@ -125,7 +125,7 @@ const char* clockFormat = "H:i"; //Examples: H:i -> 21:19, h:ia -> 09:19PM
 //How long to show a message for when a scheduled message is shown for
 const int scheduledMessageDisplayTimeMillis = 7500;
 
-//Name to broadcast when USE_MULTICAST is enabled. Default is split-flap.local.. Be minful to choose something
+//Name to broadcast when USE_MULTICAST is enabled. Default is split-flap.local. Be mindful to choose something
 //unique to your local network. if running more than one display you'll need a unique name for each. 
 const char* mdnsName = "split-flap";
 
