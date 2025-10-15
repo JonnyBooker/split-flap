@@ -36,7 +36,7 @@ jobs:
               version: 7.0.4
             - name: ArduinoOTA
               version: 1.1.0
-            - name: ESP32Async/ESPAsyncWebServer
+            - name: ESP Async WebServer
               version: 3.8.1
             - name: ezTime
               version: 0.8.3

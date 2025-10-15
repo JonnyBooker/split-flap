@@ -296,10 +296,11 @@ void setup() {
           String message = "";
           int params = request->params();
           for (int paramIndex = 0; paramIndex < params; paramIndex++) {
-            AsyncWebParameter* p = request->getParam(paramIndex);
+            const AsyncWebParameter* p = request->getParam(paramIndex);
             if (p->isPost()) {
-              if(p->name() == "message")
+              if(p->name() == "message") {
                 message = p->value();
+              }
             }
           }
 
@@ -382,7 +383,7 @@ void setup() {
       
       int params = request->params();
       for (int paramIndex = 0; paramIndex < params; paramIndex++) {
-        AsyncWebParameter* p = request->getParam(paramIndex);
+        const AsyncWebParameter* p = request->getParam(paramIndex);
         if (p->isPost()) {
           //HTTP POST alignment value
           if (p->name() == PARAM_ALIGNMENT) {
