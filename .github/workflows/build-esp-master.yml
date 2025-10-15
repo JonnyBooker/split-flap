@@ -38,6 +38,8 @@ jobs:
               version: 1.1.0
             - name: ESP Async WebServer
               version: 3.8.1
+            - name: ESP Async TCP
+              version: 2.0.0
             - name: ezTime
               version: 0.8.3
             - name: NTPClient

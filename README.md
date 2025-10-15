@@ -104,9 +104,7 @@ To upload the sketch to the ESP you need to install a few things to your arduino
 - Install the following libraries via Library Manager:
   - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson) - Version: 7.4.2
   - [ESPAsyncWebServer](https://github.com/ESP32Async/ESPAsyncWebServer) - Version: 3.8.1
-    - Dependencies which should be installed automatically:
-      - [ESPAsyncTCP](https://github.com/dvarrel/ESPAsyncTCP)
-      - [AsyncTCP](https://github.com/dvarrel/AsyncTCP)
+  - [ESP Async TCP](https://github.com/ESP32Async/ESPAsyncTCP) - Version: 2.0.0
   - [NTPClient](https://github.com/arduino-libraries/NTPClient) - Version: 3.2.1
   - [ezTime](https://github.com/ropg/ezTime) - Version: 0.8.3
   - [LinkedList](https://github.com/ivanseidel/LinkedList) - Version: 1.3.3
