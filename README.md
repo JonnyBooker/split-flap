@@ -4,6 +4,19 @@
 
 ![Split Flap Display](./Images/Split-Flap.jpg)
 
+---
+**NOTE:** I will make my best attempt to provide answers where possible in issues and try to keep things up to date where possible dependency wise, however I do not have the time/capacity to work on this project on a consistent basis. Answers and updates may take time.
+
+My personal Split-Flap has been working since I first published this repository and continues to work to this day happily. Several people have also successfully been in touch with their working creations of this Split-Flap which I am very happy it has worked for :) 
+
+I hope this project continues to work for any whom wish to embark on it but be aware, it is a lot of work to complete.
+
+Thank you everyone whom has contributed, included in the "main" release or not, it is very appreciated. I hope to keep the project going in future.
+
+<3
+
+---
+
 This project has been forked from the brilliant [Split Flap Project](https://github.com/Dave19171/split-flap) by [David Königsmann](https://github.com/Dave19171). None of this would have been possible without the great foundations that have been put in place.
 
 This project has built on the original project to add extra features such as:
@@ -90,8 +103,8 @@ A simple sketch has been written to set the offset. Upload the `EEPROM_Write_Off
 Every units address is set by a DIP switch. They need to be set ascending from zero in binary.
 This is how my 10 units are set, 1 means switch is in the up-position:
 | Unit 1 | Unit 2 | Unit 3 | Unit 4 | Unit 5 | Unit 6 | Unit 7 | Unit 8 | Unit 9 | Unit 10 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0000 | 0001 | 0010 | 0011 | 0100 | 0101 | 0110 | 0111 | 1000 | 1001 |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------- |
+| 0000   | 0001   | 0010   | 0011   | 0100   | 0101   | 0110   | 0111   | 1000   | 1001    |
 
 ### ESP01/ESP8266
 
